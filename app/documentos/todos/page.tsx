@@ -3,7 +3,7 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "@/components/ui/DataTable";
 import TituloModulo from "@/components/ui/TituloModulo";
-
+import { FileText } from "lucide-react";
 /* =========================
    TYPE
 ========================= */
@@ -27,7 +27,6 @@ const data: Documento[] = [
   { nombre: "Informe_finanzas_q1.xlsx", tipo: "Excel", fecha: "2026-05-08" },
   { nombre: "Acta_reunion.docx", tipo: "Word", fecha: "2026-05-09" },
   { nombre: "Manual_usuario.pdf", tipo: "PDF", fecha: "2026-05-10" },
-
   { nombre: "Estrategia_marketing.pdf", tipo: "PDF", fecha: "2026-05-11" },
   { nombre: "Balance_general.xlsx", tipo: "Excel", fecha: "2026-05-12" },
   { nombre: "Contrato_proveedor.docx", tipo: "Word", fecha: "2026-05-13" },
@@ -38,7 +37,6 @@ const data: Documento[] = [
   { nombre: "Informe_ventas.pdf", tipo: "PDF", fecha: "2026-05-18" },
   { nombre: "Presentacion_clientes.pptx", tipo: "PowerPoint", fecha: "2026-05-19" },
   { nombre: "Registro_proveedores.xlsx", tipo: "Excel", fecha: "2026-05-20" },
-
   { nombre: "Manual_procesos.docx", tipo: "Word", fecha: "2026-05-21" },
   { nombre: "Plan_operativo.pdf", tipo: "PDF", fecha: "2026-05-22" },
   { nombre: "Indicadores_kpi.xlsx", tipo: "Excel", fecha: "2026-05-23" },
@@ -77,36 +75,52 @@ const columns: ColumnDef<Documento>[] = [
 ========================= */
 export default function Page() {
   return (
-    /**
-     * 1. grid-cols-1 + min-w-0: Obliga al navegador a calcular el ancho
-     *    basándose en el padre y no en el contenido de la tabla.
-     */
     <div className="grid grid-cols-1 min-w-0 w-full p-4 md:p-6 space-y-4">
-      <TituloModulo titulo="Documentos" variant="violet" />
+      <TituloModulo titulo="Documentos" variant="violet" icon={FileText} />
 
       <div className="w-full min-w-0 overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 shadow-sm">
-        <div className="overflow-x-auto w-full">
-          <DataTable
-            data={data}
-            columns={columns}
-            pageSize={10}
-            rowActions={(row) => [
-              {
-                label: "Ver",
-                onClick: () => console.log("ver", row),
+        {/* ❌ quitamos el overflow duplicado */}
+        <DataTable
+          data={data}
+          columns={columns}
+          pageSize={10}
+          /* =========================
+             ROW ACTIONS
+          ========================= */
+          rowActions={(row) => [
+            {
+              label: "Ver",
+              onClick: () => console.log("ver", row),
+            },
+            {
+              label: "Editar",
+              onClick: () => console.log("editar", row),
+            },
+            {
+              label: "Eliminar",
+              variant: "danger",
+              onClick: () => console.log("eliminar", row),
+            },
+          ]}
+          /* =========================
+             BULK ACTIONS 🔥
+          ========================= */
+          bulkActions={(rows) => [
+            {
+              label: "Eliminar seleccionados",
+              variant: "danger",
+              onClick: (rows) => {
+                console.log("eliminar masivo", rows);
               },
-              {
-                label: "Editar",
-                onClick: () => console.log("editar", row),
+            },
+            {
+              label: "Exportar",
+              onClick: (rows) => {
+                console.log("exportar", rows);
               },
-              {
-                label: "Eliminar",
-                variant: "danger",
-                onClick: () => console.log("eliminar", row),
-              },
-            ]}
-          />
-        </div>
+            },
+          ]}
+        />
       </div>
     </div>
   );

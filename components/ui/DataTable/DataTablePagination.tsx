@@ -1,6 +1,6 @@
 "use client";
 
-import PageSizeSelector from "../PageSizeSelector";
+import PageSizeSelector from "./PageSizeSelector";
 
 type Props = {
   pageIndex: number;
