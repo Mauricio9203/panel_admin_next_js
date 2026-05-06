@@ -9,6 +9,7 @@ export default function Card({ children, className = "" }: CardProps) {
   return (
     <div
       className={`
+        h-full
         rounded-md
         p-5
         bg-white/80 dark:bg-zinc-800/70

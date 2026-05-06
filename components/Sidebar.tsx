@@ -63,11 +63,55 @@ export default function Sidebar({ collapsed, mobileOpen }: SidebarProps) {
         flex flex-col
       `}
     >
-      {/* HEADER */}
-      <div className="px-3 py-3">{!collapsed && <h2 className="font-semibold text-sm text-violet-900 dark:text-violet-200">Admin Panel</h2>}</div>
+      {/* 🟣 HEADER PROFESIONAL */}
+      <div className="px-3 py-4 border-b border-gray-200 dark:border-gray-800">
+        <div
+          className={`
+            flex items-center gap-3
+            ${collapsed ? "justify-center" : ""}
+          `}
+        >
+          {/* 🖼️ Logo */}
+          <div
+            className="
+              relative group
+              w-9 h-9 flex items-center justify-center
+              rounded-lg
+              bg-gradient-to-br from-violet-500/10 to-violet-700/10
+              overflow-hidden
+            "
+          >
+            <img
+              src="/logo_ejemplo.png"
+              alt="Logo"
+              className="
+                w-6 h-6 object-contain
+                transition-all duration-300 ease-out
+                group-hover:scale-110
+                group-hover:rotate-3
+              "
+            />
 
-      {/* NAV */}
-      <nav className="flex-1 px-2 space-y-2">
+            <div
+              className="
+                absolute inset-0 opacity-0 group-hover:opacity-100
+                transition duration-300
+                bg-violet-500/20 blur-md
+              "
+            />
+          </div>
+
+          {!collapsed && (
+            <div className="flex flex-col leading-tight">
+              <span className="text-sm font-semibold text-gray-900 dark:text-neutral-100 tracking-tight">Nombre de Marca</span>
+              <span className="text-[10px] text-gray-500 dark:text-neutral-400">Slogan de empresa</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* 📂 NAV */}
+      <nav className="flex-1 px-2 space-y-2 mt-2">
         {sidebarMenu.map((item) => {
           const Icon = item.icon;
           const isOpen = openMenus[item.key];
@@ -76,7 +120,6 @@ export default function Sidebar({ collapsed, mobileOpen }: SidebarProps) {
 
           return (
             <div key={item.key}>
-              {/* ITEM PRINCIPAL */}
               <button
                 onClick={() => {
                   if (item.children) {
@@ -88,12 +131,12 @@ export default function Sidebar({ collapsed, mobileOpen }: SidebarProps) {
                 className={`
                   flex w-full items-center justify-between
                   px-3 py-2 rounded-md text-sm
-            
+                  transition-all
 
                   ${isActive ? "bg-violet-100 dark:bg-gray-800 text-violet-900 dark:text-violet-200" : "text-violet-900 dark:text-violet-200 hover:bg-gray-100 dark:hover:bg-gray-800"}
                 `}
               >
-                <div className="flex items-center gap-3 ">
+                <div className="flex items-center gap-3">
                   <Icon size={18} />
                   {!collapsed && <span>{item.label}</span>}
                 </div>
@@ -105,8 +148,8 @@ export default function Sidebar({ collapsed, mobileOpen }: SidebarProps) {
               {item.children && (
                 <div
                   className={`
-              ml-5 mt-1 space-y-1 overflow-hidden
-    transition-all duration-300
+                    ml-5 mt-1 space-y-1 overflow-hidden
+                    transition-all duration-300
 
                     ${isOpen && !collapsed ? "max-h-40 opacity-100" : "max-h-0 opacity-0 pointer-events-none"}
                   `}
@@ -120,6 +163,7 @@ export default function Sidebar({ collapsed, mobileOpen }: SidebarProps) {
                         onClick={() => goTo(child.key)}
                         className={`
                           flex w-full items-center gap-2 px-3 py-1.5 rounded-md text-sm
+                          transition-all
 
                           ${isChildActive ? "bg-violet-100 dark:bg-gray-800 text-violet-900 dark:text-violet-200" : "text-violet-900 dark:text-violet-200 hover:bg-gray-100 dark:hover:bg-gray-800"}
                         `}
@@ -135,6 +179,41 @@ export default function Sidebar({ collapsed, mobileOpen }: SidebarProps) {
           );
         })}
       </nav>
+
+      {/* 👤 USER */}
+      <div className="p-3 border-t border-gray-200 dark:border-gray-800">
+        <div
+          className={`
+            flex items-center gap-3
+            rounded-md px-2 py-2
+            transition-all duration-300
+            hover:bg-gray-100 dark:hover:bg-gray-800
+            ${collapsed ? "justify-center" : ""}
+          `}
+        >
+          {/* Avatar */}
+          <div className="relative group">
+            <img
+              src="/avatar.png"
+              alt="User"
+              className="
+                w-8 h-8 rounded-full object-cover
+                transition-all duration-300
+                group-hover:scale-105
+              "
+            />
+
+            <div className="absolute inset-0 rounded-full bg-violet-500/20 blur-md opacity-0 group-hover:opacity-100 transition" />
+          </div>
+
+          {!collapsed && (
+            <div className="flex flex-col leading-tight overflow-hidden">
+              <span className="text-sm font-medium text-gray-900 dark:text-neutral-100 truncate">Mauri</span>
+              <span className="text-[11px] text-gray-500 dark:text-neutral-400 truncate">Admin</span>
+            </div>
+          )}
+        </div>
+      </div>
     </aside>
   );
 }

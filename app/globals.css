@@ -6,3 +6,51 @@
 body {
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* 🌈 Variables para colores (light / dark) */
+:root {
+  --scrollbar-bg: #f3f0ff;
+  --scrollbar-thumb: #7c3aed; /* violeta */
+  --scrollbar-thumb-hover: #6d28d9;
+}
+
+.dark {
+  --scrollbar-bg: #1a1333;
+  --scrollbar-thumb: #a78bfa;
+  --scrollbar-thumb-hover: #c4b5fd;
+}
+
+/* 🌐 Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-bg);
+}
+
+/* 🌐 Webkit (Chrome, Edge, Safari) */
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: var(--scrollbar-bg);
+  border-radius: 999px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: linear-gradient(
+    180deg,
+    var(--scrollbar-thumb),
+    #9333ea
+  );
+  border-radius: 999px;
+  border: 2px solid var(--scrollbar-bg);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(
+    180deg,
+    var(--scrollbar-thumb-hover),
+    #7e22ce
+  );
+}
