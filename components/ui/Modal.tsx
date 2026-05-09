@@ -1,51 +1,107 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom"; // Importante para salir del div contenedor
+import { motion, AnimatePresence, Variants } from "framer-motion";
 
 interface ModalProps {
   open: boolean;
   onClose: () => void;
   title?: string;
   children: React.ReactNode;
+  size?: "sm" | "md" | "lg" | "xl" | "full";
 }
 
-export default function Modal({ open, onClose, title, children }: ModalProps) {
+const sizeClasses: Record<string, string> = {
+  sm: "sm:max-w-sm",
+  md: "sm:max-w-md",
+  lg: "sm:max-w-lg",
+  xl: "sm:max-w-2xl",
+  full: "sm:max-w-[95vw] sm:h-[90vh]",
+};
+
+export default function Modal({ open, onClose, title, children, size = "md" }: ModalProps) {
+  const [mounted, setMounted] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
   useEffect(() => {
-    const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+    setMounted(true); // Evita errores de hidratación en Next.js
+    const checkMobile = () => setIsMobile(window.innerWidth < 640);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  useEffect(() => {
+    if (open) document.body.style.overflow = "hidden";
+    else document.body.style.overflow = "unset";
+    return () => {
+      document.body.style.overflow = "unset";
     };
+  }, [open]);
 
-    document.addEventListener("keydown", handleEsc);
-    return () => document.removeEventListener("keydown", handleEsc);
-  }, [onClose]);
+  if (!mounted) return null;
 
-  if (!open) return null;
+  const desktopVariants: Variants = {
+    initial: { opacity: 0, scale: 0.9, y: 15 },
+    animate: { opacity: 1, scale: 1, y: 0, transition: { type: "spring", damping: 25, stiffness: 400 } },
+    exit: { opacity: 0, scale: 0.9, y: 15, transition: { duration: 0.2 } },
+  };
 
-  return (
-    <div className="fixed inset-0 z-50">
-      {/* BACKDROP */}
-      <div onClick={onClose} className="absolute inset-0 bg-black/40 backdrop-blur-md" />
+  const mobileVariants: Variants = {
+    initial: { y: "100%" },
+    animate: { y: 0, transition: { type: "spring", damping: 30, stiffness: 300, mass: 0.8 } },
+    exit: { y: "100%", transition: { duration: 0.3, ease: "easeInOut" } },
+  };
 
-      {/* 🧠 CENTRADO PERFECTO (GRID) */}
-      <div className="relative h-full w-full grid place-items-center p-4">
-        {/* MODAL */}
-        <div
-          className="
-            w-full max-w-md
-            bg-white/90 dark:bg-slate-900/90
-            backdrop-blur-xl
-            rounded-2xl
-            shadow-2xl
-            border border-white/20 dark:border-white/10
-            p-5
-            animate-in fade-in zoom-in-95
-          "
-        >
-          {title && <h2 className="text-lg font-semibold text-violet-900 dark:text-violet-200 mb-3">{title}</h2>}
+  // El Portal renderiza fuera del árbol jerárquico actual
+  return createPortal(
+    <AnimatePresence>
+      {open && (
+        <div className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center overflow-hidden p-4">
+          {/* BACKDROP - Glassmorphism puro */}
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} className="absolute inset-0 bg-white/10 dark:bg-black/40 backdrop-blur-md" />
 
-          <div className="text-sm text-violet-900 dark:text-violet-200">{children}</div>
+          {/* VENTANA MODAL - Estilo Glassmorphic */}
+          <motion.div
+            variants={isMobile ? mobileVariants : desktopVariants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            className={`
+              relative w-full ${sizeClasses[size]}
+              flex flex-col max-h-[92vh] sm:max-h-[90vh]
+              /* Estilo Cristal */
+              bg-white/70 dark:bg-slate-900/80 
+              backdrop-blur-xl 
+              border border-white/20 dark:border-white/10
+              rounded-t-[2.5rem] sm:rounded-[2.5rem]
+              shadow-[0_20px_50px_rgba(0,0,0,0.3)]
+              will-change-transform
+              overflow-hidden
+            `}
+          >
+            {/* Indicador visual móvil */}
+            <div className="flex justify-center pt-4 sm:hidden shrink-0">
+              <div className="w-12 h-1.5 bg-slate-400/50 dark:bg-slate-500/50 rounded-full" />
+            </div>
+
+            {/* CABECERA */}
+            <div className="px-6 py-4 sm:px-8 sm:py-5 flex justify-between items-center shrink-0">
+              {title ? <h2 className="text-xl font-bold text-slate-900 dark:text-white">{title}</h2> : <div />}
+              <button onClick={onClose} className="p-2 bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20 rounded-full transition-colors">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* CUERPO */}
+            <div className="px-6 pb-8 sm:px-8 overflow-y-auto flex-1 min-h-0 text-slate-800 dark:text-slate-200">{children}</div>
+          </motion.div>
         </div>
-      </div>
-    </div>
+      )}
+    </AnimatePresence>,
+    document.body, // Aquí se inyecta
   );
 }

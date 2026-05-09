@@ -7,22 +7,23 @@ export const sidebarMenu = [
     icon: LayoutDashboard,
   },
   {
-    key: "documentos",
-    label: "Documentos",
+    key: "tablas",
+    label: "Tablas",
     icon: Folder,
     children: [
-      { key: "documentos/todos", label: "Todos" },
-      { key: "documentos/crear", label: "Crear" },
+      { key: "tablas/tabla_base", label: "Tabla Base" },
+      { key: "tablas/tabla_supabase", label: "Tabla Supabase" },
     ],
   },
    // 🆕 NUEVO MÓDULO
   {
-    key: "reportes",
-    label: "Reportes",
+    key: "componentes",
+    label: "Componentes",
     icon: BarChart2,
     children: [
-      { key: "reportes/lista", label: "Lista" },
-      { key: "reportes/estadisticas", label: "Estadísticas" },
+      { key: "componentes/modales", label: "Modales" },
+      { key: "componentes/botones", label: "Botones" },
+      { key: "componentes/input", label: "Input" },
     ],
   },
 

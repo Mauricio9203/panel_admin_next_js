@@ -4,6 +4,8 @@ import { LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContai
 
 import Card from "@/components/ui/Card";
 import ChartCard from "./ChartCard";
+import TituloModulo from "@/components/ui/TituloModulo";
+import { LayoutDashboard } from "lucide-react";
 
 type Props = {
   data: {
@@ -21,10 +23,7 @@ export default function DashboardClient({ data, pieData }: Props) {
   return (
     <div className="p-4 sm:p-6 space-y-6 bg-white dark:bg-zinc-900 min-h-screen">
       {/* HEADER */}
-      <div>
-        <h1 className="text-lg sm:text-xl font-semibold text-violet-900 dark:text-violet-300">Dashboard</h1>
-        <p className="text-xs text-gray-500 dark:text-gray-400">Resumen general</p>
-      </div>
+      <TituloModulo titulo="Dashboard" variant="violet" icon={LayoutDashboard} />
 
       {/* CARDS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">

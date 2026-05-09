@@ -1,6 +1,8 @@
 import { createClient } from "@supabase/supabase-js";
 import { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "@/components/ui/DataTable";
+import TituloModulo from "@/components/ui/TituloModulo";
+import { LayoutDashboard } from "lucide-react";
 
 /* =========================
    SUPABASE CLIENT
@@ -49,8 +51,11 @@ export default async function Page() {
   }
 
   return (
-    <div className="p-6">
-      <DataTable<Venta> data={data ?? []} columns={columns} pageSize={5} />
+    <div className="grid grid-cols-1 min-w-0 w-full p-4 md:p-6 space-y-4">
+      <TituloModulo titulo="Dashboard" variant="violet" icon={LayoutDashboard} />
+      <div className="w-full min-w-0 overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 shadow-sm">
+        <DataTable<Venta> data={data ?? []} columns={columns} pageSize={5} />
+      </div>
     </div>
   );
 }
