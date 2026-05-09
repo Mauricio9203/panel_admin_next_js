@@ -1,4 +1,4 @@
-import { LayoutDashboard, Folder, BarChart2 } from "lucide-react";
+import { LayoutDashboard, Table2, Box } from "lucide-react";
 
 export const sidebarMenu = [
   {
@@ -9,7 +9,7 @@ export const sidebarMenu = [
   {
     key: "tablas",
     label: "Tablas",
-    icon: Folder,
+    icon: Table2,
     children: [
       { key: "tablas/tabla_base", label: "Tabla Base" },
       { key: "tablas/tabla_supabase", label: "Tabla Supabase" },
@@ -19,11 +19,13 @@ export const sidebarMenu = [
   {
     key: "componentes",
     label: "Componentes",
-    icon: BarChart2,
+    icon: Box,
     children: [
       { key: "componentes/modales", label: "Modales" },
       { key: "componentes/botones", label: "Botones" },
       { key: "componentes/input", label: "Input" },
+      { key: "componentes/input_especiales", label: "Input Especiales" },
+      { key: "componentes/componentes_navegacion", label: "Input Especiales" },
     ],
   },
 

@@ -16,10 +16,10 @@ interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "
 const NormalInput = forwardRef<HTMLInputElement, InputProps>(({ label, icon: Icon, size = "md", error, className = "", type, ...props }, ref) => {
   const [showPassword, setShowPassword] = useState(false);
 
-  // Determinamos si es un campo de password para mostrar el toggle
   const isPassword = type === "password";
+  // Detectamos si es un tipo cronológico para aplicar estilos extra
+  const isDateTime = type === "date" || type === "time" || type === "datetime-local";
 
-  // El tipo final que se le pasa al input nativo
   const inputType = isPassword ? (showPassword ? "text" : "password") : type;
 
   const sizeConfig = {
@@ -53,16 +53,24 @@ const NormalInput = forwardRef<HTMLInputElement, InputProps>(({ label, icon: Ico
                 ${isPassword ? "pr-10" : ""}
                 ${error ? "border-rose-500/50 dark:border-rose-500/50 focus:border-rose-500" : "border-slate-200 dark:border-slate-800 focus:border-violet-500/50"}
                 ${sizeConfig[size].container}
+                
+                /* Estilos para Date e Time */
+                ${
+                  isDateTime
+                    ? `
+                  appearance-none 
+                  dark:[&::-webkit-calendar-picker-indicator]:filter dark:[&::-webkit-calendar-picker-indicator]:invert 
+                  [&::-webkit-calendar-picker-indicator]:opacity-50 
+                  [&::-webkit-calendar-picker-indicator]:cursor-pointer
+                  hover:[&::-webkit-calendar-picker-indicator]:opacity-100
+                `
+                    : ""
+                }
               `}
         />
 
         {isPassword && (
-          <button
-            type="button"
-            onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 flex items-center justify-center text-slate-400 hover:text-violet-500 transition-colors z-10"
-            tabIndex={-1} // Evita que el tabulador se detenga en el ojo antes que en el siguiente input
-          >
+          <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 flex items-center justify-center text-slate-400 hover:text-violet-500 transition-colors z-10" tabIndex={-1}>
             {showPassword ? <EyeOff className={sizeConfig[size].icon} /> : <Eye className={sizeConfig[size].icon} />}
           </button>
         )}

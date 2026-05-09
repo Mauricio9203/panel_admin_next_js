@@ -69,17 +69,26 @@ export default function Modal({ open, onClose, title, children, size = "md" }: M
             animate="animate"
             exit="exit"
             className={`
-              relative w-full ${sizeClasses[size]}
-              flex flex-col max-h-[92vh] sm:max-h-[90vh]
-              /* Estilo Cristal */
-              bg-white/70 dark:bg-slate-900/80 
-              backdrop-blur-xl 
-              border border-white/20 dark:border-white/10
-              rounded-t-[2.5rem] sm:rounded-[2.5rem]
-              shadow-[0_20px_50px_rgba(0,0,0,0.3)]
-              will-change-transform
-              overflow-hidden
-            `}
+            relative w-full ${sizeClasses[size]}
+            flex flex-col 
+            
+            /* 🔥 LA SOLUCIÓN AL ALTO: */
+            /* En móvil usa el 100% del alto dinámico menos un margen de 2rem */
+            max-h-[calc(100dvh-2rem)] 
+            /* En tablets/desktop se ajusta a un máximo de 90% para que nunca toque el borde */
+            sm:max-h-[90vh] 
+            
+            /* Estilo Cristal y Borde Gris */
+            bg-white/80 dark:bg-slate-900/90 
+            backdrop-blur-xl 
+            border border-slate-300 dark:border-slate-700
+            
+            /* Redondeado sutil (Corregido de 2.5rem a 2xl) */
+            rounded-2xl
+            
+            shadow-2xl
+            will-change-transform
+            overflow-hidden`}
           >
             {/* Indicador visual móvil */}
             <div className="flex justify-center pt-4 sm:hidden shrink-0">
