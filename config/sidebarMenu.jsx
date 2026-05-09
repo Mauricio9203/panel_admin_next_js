@@ -25,7 +25,7 @@ export const sidebarMenu = [
       { key: "componentes/botones", label: "Botones" },
       { key: "componentes/input", label: "Input" },
       { key: "componentes/input_especiales", label: "Input Especiales" },
-      { key: "componentes/componentes_navegacion", label: "Input Especiales" },
+      { key: "componentes/componentes_navegacion", label: "Componentes de Navegación" },
     ],
   },
 

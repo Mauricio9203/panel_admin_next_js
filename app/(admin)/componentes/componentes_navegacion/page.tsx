@@ -70,12 +70,42 @@ export default function Page() {
             <h2 className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Progreso del Flujo</h2>
           </div>
           <div className="flex gap-2">
-            <button onClick={() => setCurrentStep(Math.max(0, currentStep - 1))} className="text-[10px] bg-white/50 dark:bg-white/10 px-3 py-1 rounded-full border border-white/20">
-              Anterior
-            </button>
-            <button onClick={() => setCurrentStep(Math.min(stepperSteps.length - 1, currentStep + 1))} className="text-[10px] bg-violet-500 text-white px-3 py-1 rounded-full shadow-lg shadow-violet-500/20">
-              Siguiente
-            </button>
+            <div className="flex gap-2">
+              {/* Botón Anterior: Estilo Neutral / Glass */}
+              <button
+                onClick={() => setCurrentStep(Math.max(0, currentStep - 1))}
+                className="
+      text-[10px] font-bold uppercase tracking-tight
+      px-4 py-1.5 rounded-full transition-all duration-200
+      bg-white/60 dark:bg-slate-900/40 
+      border border-slate-300 dark:border-slate-700
+      text-slate-600 dark:text-slate-400
+      hover:bg-slate-100 dark:hover:bg-slate-800
+      hover:border-slate-400 dark:hover:border-slate-600
+      hover:text-slate-900 dark:hover:text-slate-100
+      active:scale-95
+    "
+              >
+                Anterior
+              </button>
+
+              {/* Botón Siguiente: Estilo Primario / Violeta */}
+              <button
+                onClick={() => setCurrentStep(Math.min(stepperSteps.length - 1, currentStep + 1))}
+                className="
+      text-[10px] font-bold uppercase tracking-tight
+      px-4 py-1.5 rounded-full transition-all duration-200
+      bg-violet-600 text-white
+      border border-violet-500 dark:border-violet-400/30
+      shadow-lg shadow-violet-500/20
+      hover:bg-violet-700
+      hover:shadow-violet-500/40
+      active:scale-95
+    "
+              >
+                Siguiente
+              </button>
+            </div>
           </div>
         </div>
         <GlassStepper steps={stepperSteps} currentStep={currentStep} />
