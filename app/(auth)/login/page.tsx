@@ -3,151 +3,165 @@
 import { signIn } from "next-auth/react";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Sun, Gem, Mail, Lock, Stars } from "lucide-react";
+import { Sun, Moon, Mail, Lock } from "lucide-react";
 import { useTheme } from "next-themes";
+import { motion, useSpring, useMotionValue, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/Button";
 import NormalInput from "@/components/ui/Input";
 
-export default function LoginPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [mounted, setMounted] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
-  const [loading, setLoading] = useState(false);
+const THEME_CONFIG = {
+  dark: {
+    bg: "bg-[#050502]",
+    card: "rgba(10, 10, 5, 0.7)",
+    border: "rgba(234, 179, 8, 0.2)",
+    button: "bg-yellow-500 hover:bg-yellow-400",
+    glow: "rgba(255, 205, 56, 0.96)",
+  },
+  light: {
+    bg: "bg-[#fcfcff]",
+    card: "rgba(255, 255, 255, 0.8)",
+    border: "rgba(139, 92, 246, 0.1)",
+    button: "bg-violet-600 hover:bg-violet-700",
+    glow: "rgba(106, 43, 255, 0.94)",
+  },
+};
 
+export default function LoginPage() {
   const router = useRouter();
   const { theme, setTheme } = useTheme();
 
-  useEffect(() => setMounted(true), []);
+  // --- Estados Funcionales ---
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
+  const isDark = (mounted ? theme : "light") === "dark";
+  const colors = isDark ? THEME_CONFIG.dark : THEME_CONFIG.light;
+
+  // --- Lógica del Mouse Glow ---
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+  const springConfig = { damping: 25, stiffness: 150 };
+  const smoothX = useSpring(mouseX, springConfig);
+  const smoothY = useSpring(mouseY, springConfig);
+
+  useEffect(() => {
+    setMounted(true);
+    const handleMouseMove = (e: MouseEvent) => {
+      mouseX.set(e.clientX);
+      mouseY.set(e.clientY);
+    };
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => window.removeEventListener("mousemove", handleMouseMove);
+  }, [mouseX, mouseY]);
+
+  // --- Manejador de Login ---
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
-    // --- VALIDACIÓN DE CAMPOS ---
+    // Validación básica antes de enviar
     if (!email || !password) {
-      setError("Por favor, completa todos los campos");
+      setError("Por favor completa todos los campos");
       return;
     }
 
     setLoading(true);
 
-    const result = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-    });
+    try {
+      const res = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      });
 
-    if (result?.error) {
-      setError("Credenciales inválidas");
+      if (res?.error) {
+        setError("Credenciales inválidas");
+      } else {
+        router.push("/dashboard"); // O tu ruta de destino
+        router.refresh();
+      }
+    } catch (err) {
+      setError("Ocurrió un error inesperado");
+    } finally {
       setLoading(false);
-    } else {
-      router.push("/dashboard");
-      router.refresh();
     }
   };
 
   if (!mounted) return null;
 
   return (
-    <div
-      className={`min-h-screen max-h-screen flex items-center justify-center p-4 transition-all duration-1000 relative overflow-hidden
-      ${theme === "dark" ? "bg-[#05010d]" : "bg-[#f8f7ff]"}`}
-    >
-      {/* --- ICONO DE CAMBIO DE MODO (Sol que cambia al Tema) --- */}
-      <div className="absolute top-6 right-6 z-50">
-        <Button
-          variant={theme === "dark" ? "warning" : "primary"}
-          size="icon"
-          className={`h-10 w-10 rounded-full shadow-lg transition-all active:scale-90
-            ${theme === "dark" ? "bg-yellow-400 text-black shadow-yellow-500/20" : "bg-violet-600 text-white shadow-violet-500/20"}`}
-          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-        >
-          <Sun size={20} fill={theme === "dark" ? "currentColor" : "none"} />
+    <div className={`relative h-screen w-full flex items-center justify-center overflow-hidden transition-colors duration-700 ${colors.bg}`}>
+      {/* --- FONDO ANIMADO --- */}
+      <div className="absolute inset-0 pointer-events-none">
+        <motion.div
+          animate={{ scale: [1, 1.2, 1], x: [0, 50, 0], y: [0, 30, 0] }}
+          transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+          className="absolute -top-[10%] -left-[10%] w-[50%] h-[50%] rounded-full opacity-30 blur-[120px]"
+          style={{ background: isDark ? "radial-gradient(circle, #facc15 0%, transparent 70%)" : "radial-gradient(circle, #8b5cf6 0%, transparent 70%)" }}
+        />
+        <motion.div
+          animate={{ scale: [1, 1.3, 1], x: [0, -40, 0], y: [0, -60, 0] }}
+          transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+          className="absolute -bottom-[10%] -right-[10%] w-[60%] h-[60%] rounded-full opacity-20 blur-[150px]"
+          style={{ background: isDark ? "radial-gradient(circle, #ca8a04 0%, transparent 70%)" : "radial-gradient(circle, #3b82f6 0%, transparent 70%)" }}
+        />
+      </div>
+
+      {/* --- MOUSE FOLLOW GLOW --- */}
+      <motion.div
+        className="fixed top-0 left-0 w-96 h-96 rounded-full pointer-events-none z-0 blur-[100px] opacity-40 transition-colors duration-500"
+        style={{
+          x: smoothX,
+          y: smoothY,
+          translateX: "-50%",
+          translateY: "-50%",
+          background: `radial-gradient(circle, ${colors.glow} 0%, transparent 70%)`,
+        }}
+      />
+
+      <div className="absolute top-6 right-6 z-[60]">
+        <Button variant="ghost" size="icon" className="rounded-full backdrop-blur-md border border-white/10" onClick={() => setTheme(isDark ? "light" : "dark")}>
+          {isDark ? <Sun size={18} className="text-yellow-400" /> : <Moon size={18} className="text-violet-600" />}
         </Button>
       </div>
 
-      <div className="w-full max-w-[360px] relative z-10 flex flex-col items-center">
-        {/* --- CABECERA: SOL ARCANO (Sin rotación constante) --- */}
-        <div className="flex flex-col items-center mb-6 group cursor-default" onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}>
-          <div className="relative mb-3 transition-transform duration-500 group-hover:scale-110">
-            {/* Glow Estático */}
-            <div
-              className={`absolute inset-0 rounded-full transition-all duration-700 blur-[30px]
-              ${isHovered ? "opacity-40 scale-125" : "opacity-20 scale-100"}
-              ${theme === "dark" ? "bg-violet-500" : "bg-violet-300"}`}
-            ></div>
-
-            {/* El Círculo del Sol */}
-            <div
-              className={`relative w-20 h-20 rounded-full border-2 flex items-center justify-center transition-all duration-500
-              ${isHovered ? "border-yellow-400 shadow-[0_0_20px_rgba(234,179,8,0.4)]" : "border-violet-500/30"}
-              ${theme === "dark" ? "bg-black/60" : "bg-white shadow-md"}`}
-            >
-              {isHovered ? <Gem size={28} className="text-yellow-400 animate-pulse" /> : <Sun size={28} className={theme === "dark" ? "text-violet-400" : "text-violet-600"} />}
-            </div>
-          </div>
-
-          <div className="text-center">
-            <h1
-              className={`text-2xl font-black tracking-[0.2em] uppercase transition-all duration-500
-              ${isHovered ? "text-yellow-500" : theme === "dark" ? "text-white" : "text-violet-900"}`}
-            >
-              MAGIC<span className="font-light italic">PANEL</span>
-            </h1>
-          </div>
+      <div className="w-full max-w-[420px] flex flex-col items-center justify-center z-50 px-6">
+        <div className="flex flex-col items-center mb-[5vh] shrink-0">
+          <motion.div whileHover={{ scale: 1.05 }} className="w-16 h-16 rounded-2xl border flex items-center justify-center mb-4 backdrop-blur-xl shadow-2xl" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
+            {isDark ? <Moon size={28} className="text-yellow-400" /> : <Sun size={28} className="text-violet-600" />}
+          </motion.div>
+          <h1 className={`text-xl font-black tracking-[0.4em] uppercase ${isDark ? "text-white" : "text-slate-900"}`}>
+            MAGIC<span className="opacity-30 font-light italic">PANEL</span>
+          </h1>
         </div>
 
-        {/* --- FORMULARIO --- */}
-        <form
-          onSubmit={handleSubmit}
-          noValidate // Usamos nuestra propia validación de estado
-          className={`w-full p-7 border-2 rounded-[1.5rem] transition-all duration-500 relative
-            ${theme === "dark" ? "bg-slate-900/40 backdrop-blur-xl border-violet-500/10 shadow-[0_15px_35px_rgba(0,0,0,0.5)]" : "bg-white border-violet-50 shadow-[0_10px_25px_rgba(139,92,246,0.05)]"}`}
-        >
-          <div className="space-y-4">
-            {error && <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-500 text-[10px] font-bold uppercase tracking-widest text-center">{error}</div>}
+        <motion.form onSubmit={handleSubmit} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full flex flex-col p-8 border rounded-[2.5rem] backdrop-blur-3xl shadow-2xl overflow-hidden" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
+          <div className="flex flex-col gap-[3vh]">
+            <AnimatePresence mode="wait">
+              {error && (
+                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="bg-red-500/10 border border-red-500/20 text-red-500 text-[10px] py-2 px-4 rounded-xl font-bold uppercase tracking-wider text-center">
+                  {error}
+                </motion.div>
+              )}
+            </AnimatePresence>
 
-            <NormalInput
-              label="Correo"
-              icon={Mail}
-              type="email"
-              placeholder="admin@test.com"
-              size="md"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              // Mostramos error visual si el error contiene la palabra correo o si intentó enviar vacío
-              error={error && !email ? "Campo obligatorio" : undefined}
-            />
+            <NormalInput label="Email" placeholder="nombre@ejemplo.com" icon={Mail} type="email" size="md" value={email} onChange={(e) => setEmail(e.target.value)} disabled={loading} />
 
-            <NormalInput label="Contraseña" icon={Lock} type="password" placeholder="••••••••" size="md" value={password} onChange={(e) => setPassword(e.target.value)} error={error && !password ? "Campo obligatorio" : undefined} />
+            <NormalInput label="Password" placeholder="••••••••" icon={Lock} type="password" size="md" value={password} onChange={(e) => setPassword(e.target.value)} disabled={loading} />
 
-            <Button
-              type="submit"
-              variant={(theme === "dark" ? "warning" : "primary") as any}
-              size="lg"
-              disabled={loading}
-              className={`w-full font-black uppercase tracking-[0.3em] text-[10px] h-12 transition-all mt-2
-                ${theme === "dark" ? "bg-yellow-500 text-black shadow-yellow-500/20 hover:bg-yellow-400" : "bg-violet-600 text-white shadow-violet-500/20 hover:bg-violet-700"}`}
-            >
-              {loading ? "Validando..." : "Iniciar Sesión"}
+            <Button type="submit" disabled={loading} className={`w-full font-black uppercase tracking-[0.3em] text-[11px] h-14 mt-2 text-white border-none rounded-2xl shadow-xl transition-all active:scale-95 ${colors.button}`}>
+              {loading ? "Iniciando..." : "Ingresar"}
             </Button>
           </div>
-        </form>
+        </motion.form>
 
-        <div className="mt-6 flex flex-col items-center gap-1 opacity-20">
-          <Stars size={14} className={theme === "dark" ? "text-yellow-500" : "text-violet-500"} />
-          <span className="text-[7px] font-bold tracking-[0.4em] uppercase">M. Garrido — 2026</span>
+        <div className="mt-[5vh] opacity-30 shrink-0">
+          <span className="text-[10px] font-bold tracking-[0.5em] uppercase">M. GARRIDO — 2026</span>
         </div>
       </div>
-
-      <style jsx global>{`
-        body {
-          overflow: hidden;
-          margin: 0;
-        }
-      `}</style>
     </div>
   );
 }

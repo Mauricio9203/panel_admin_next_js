@@ -4,30 +4,31 @@ import { ReactNode } from "react";
 
 type ColSpan = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
 
-interface CardProps {
+type ChartCardProps = {
+  title: string;
   children: ReactNode;
   className?: string;
-  // Props opcionales para control de columnas
-  sm?: ColSpan;
+  // Props para el sistema de 12 columnas
+  colSpan?: ColSpan;
   md?: ColSpan;
   lg?: ColSpan;
-}
+};
 
-export default function Card({ children, className = "", sm = 12, md, lg }: CardProps) {
-  // Diccionarios de clases estáticas para que Tailwind no las ignore
-  const smStyles: Record<ColSpan, string> = {
-    1: "sm:col-span-1",
-    2: "sm:col-span-2",
-    3: "sm:col-span-3",
-    4: "sm:col-span-4",
-    5: "sm:col-span-5",
-    6: "sm:col-span-6",
-    7: "sm:col-span-7",
-    8: "sm:col-span-8",
-    9: "sm:col-span-9",
-    10: "sm:col-span-10",
-    11: "sm:col-span-11",
-    12: "sm:col-span-12",
+export default function ChartCard({ title, children, className = "", colSpan = 12, md, lg }: ChartCardProps) {
+  // Mapeo de seguridad para Tailwind
+  const spanStyles: Record<ColSpan, string> = {
+    1: "col-span-1",
+    2: "col-span-2",
+    3: "col-span-3",
+    4: "col-span-4",
+    5: "col-span-5",
+    6: "col-span-6",
+    7: "col-span-7",
+    8: "col-span-8",
+    9: "col-span-9",
+    10: "col-span-10",
+    11: "col-span-11",
+    12: "col-span-12",
   };
 
   const mdStyles: Record<ColSpan, string> = {
@@ -63,23 +64,29 @@ export default function Card({ children, className = "", sm = 12, md, lg }: Card
   return (
     <div
       className={`
-        h-full
+        h-72
+        w-full
+        flex
+        flex-col
         rounded-sm
         p-5
         bg-white/80 dark:bg-zinc-800/70
         border border-violet-200 dark:border-zinc-700
         shadow-sm dark:shadow-none
-        backdrop-blur-md
+        backdrop-blur
         transition-all duration-300
-        /* Control de Grid */
-        col-span-12
-        ${smStyles[sm]}
+        /* Sistema de Grid */
+        ${spanStyles[colSpan]}
         ${md ? mdStyles[md] : ""}
         ${lg ? lgStyles[lg] : ""}
         ${className}
       `}
     >
-      {children}
+      {/* Header */}
+      <p className="text-[10px] uppercase font-bold tracking-widest mb-3 text-gray-500 dark:text-zinc-400">{title}</p>
+
+      {/* Chart container (CLAVE) */}
+      <div className="w-full flex-1 min-h-0">{children}</div>
     </div>
   );
 }

@@ -6,6 +6,15 @@ export const sidebarMenu = [
     label: "Dashboard",
     icon: LayoutDashboard,
   },
+    {
+    key: "modulo_base",
+    label: "Módulo Base",
+    icon: Box,
+    children: [
+      { key: "modulo_base/sub_modulo_base", label: "Sub módulo Base" },
+      { key: "modulo_base/cargando_modulo", label: "Ejemplo de Carga de Modulo" },
+    ],
+  },
   {
     key: "tablas",
     label: "Tablas",
@@ -15,7 +24,6 @@ export const sidebarMenu = [
       { key: "tablas/tabla_supabase", label: "Tabla Supabase" },
     ],
   },
-   // 🆕 NUEVO MÓDULO
   {
     key: "componentes",
     label: "Componentes",
