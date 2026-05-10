@@ -1,112 +1,114 @@
 "use client";
 
-import { LucideAppWindow, Users, CircleDollarSign, TrendingUp } from "lucide-react";
-import { AreaChart, Area, ResponsiveContainer, BarChart, Bar } from "recharts";
-import TituloModulo from "@/components/ui/TituloModulo";
+import { LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar, AreaChart, Area, PieChart, Pie, Cell, ComposedChart } from "recharts";
+
 import Card from "@/components/ui/Card";
-import ChartCard from "@/components/ui/ChartCard";
+import ChartCard from "./ChartCard";
+import TituloModulo from "@/components/ui/TituloModulo";
+import { LayoutDashboard } from "lucide-react";
 
-export default function DashboardOperativoPage() {
-  const miniChartData = [
-    { name: "Lun", value: 400 },
-    { name: "Mar", value: 300 },
-    { name: "Mie", value: 200 },
-    { name: "Jue", value: 278 },
-    { name: "Vie", value: 189 },
-    { name: "Sab", value: 239 },
-    { name: "Dom", value: 349 },
-  ];
+type Props = {
+  data: {
+    name: string;
+    usuarios: number;
+    ventas: number;
+  }[];
+  pieData: {
+    name: string;
+    value: number;
+  }[];
+};
 
+export default function DashboardClient({ data, pieData }: Props) {
   return (
-    <div className="p-4 md:p-6 min-w-0 w-full space-y-6">
-      {/* 1. HEADER */}
-      <TituloModulo titulo="Dashboard Operativo" variant="violet" icon={LucideAppWindow} />
+    <div className="p-4 sm:p-6 space-y-6 bg-white dark:bg-zinc-900 min-h-screen">
+      {/* HEADER */}
+      <TituloModulo titulo="Dashboard" variant="violet" icon={LayoutDashboard} />
 
-      {/* 2. FILA DE MÉTRICAS (Cards Simples) */}
-      <div className="grid grid-cols-12 gap-4">
-        <Card md={4} className="flex items-center justify-between">
-          <div>
-            <p className="text-[10px] uppercase font-bold text-slate-400 tracking-widest">Usuarios Totales</p>
-            <p className="text-2xl font-black text-slate-800 dark:text-white">1,240</p>
-          </div>
-          <div className="p-3 bg-violet-500/10 rounded-xl text-violet-500">
-            <Users size={24} />
-          </div>
+      {/* CARDS */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+        <Card>
+          <p className="text-xs text-gray-500">Usuarios</p>
+          <p className="text-lg sm:text-xl md:text-2xl font-semibold truncate">1,240</p>
         </Card>
 
-        <Card md={4} className="flex items-center justify-between">
-          <div>
-            <p className="text-[10px] uppercase font-bold text-slate-400 tracking-widest">Ventas Netas</p>
-            <p className="text-2xl font-black text-slate-800 dark:text-white">$8,320</p>
-          </div>
-          <div className="p-3 bg-emerald-500/10 rounded-xl text-emerald-500">
-            <CircleDollarSign size={24} />
-          </div>
+        <Card>
+          <p className="text-xs text-gray-500">Ventas</p>
+          <p className="text-lg sm:text-xl md:text-2xl font-semibold truncate">$8,320</p>
         </Card>
 
-        <Card md={4} className="flex items-center justify-between">
-          <div>
-            <p className="text-[10px] uppercase font-bold text-slate-400 tracking-widest">Conversión</p>
-            <p className="text-2xl font-black text-slate-800 dark:text-white">4.2%</p>
-          </div>
-          <div className="p-3 bg-amber-500/10 rounded-xl text-amber-500">
-            <TrendingUp size={24} />
-          </div>
+        <Card>
+          <p className="text-xs text-gray-500">Conversión</p>
+          <p className="text-lg sm:text-xl md:text-2xl font-semibold truncate">4.2%</p>
         </Card>
       </div>
 
-      {/* 3. FILA DE GRÁFICOS (ChartCards) */}
-      <div className="grid grid-cols-12 gap-4 md:gap-6">
-        {/* Gráfico de Crecimiento */}
-        <ChartCard title="Tendencia de Crecimiento" md={4} className="group">
-          <div className="flex items-end justify-between mb-4">
-            <span className="text-xs text-emerald-500 font-bold bg-emerald-500/10 px-2 py-0.5 rounded-full">+12.5%</span>
-            <p className="text-xs text-slate-400">Últimos 7 días</p>
-          </div>
-          <div className="h-40 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={miniChartData} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
-                <Area type="step" dataKey="value" stroke="#a78bfa" fill="#a78bfa" fillOpacity={0.1} strokeWidth={2} />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
+      {/* CHARTS */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        {/* LINE */}
+        <ChartCard title="Usuarios por mes">
+          <ResponsiveContainer width="100%" height={220}>
+            <LineChart data={data}>
+              <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+              <XAxis dataKey="name" tick={{ fontSize: 10 }} />
+              <YAxis tick={{ fontSize: 10 }} />
+              <Tooltip contentStyle={{ fontSize: "12px" }} />
+              <Line dataKey="usuarios" stroke="#a78bfa" strokeWidth={2} />
+            </LineChart>
+          </ResponsiveContainer>
         </ChartCard>
 
-        {/* Gráfico de Volumen */}
-        <ChartCard title="Volumen Semanal" md={4} className="group">
-          <div className="flex items-end justify-between mb-4">
-            <span className="text-xs text-rose-500 font-bold bg-rose-500/10 px-2 py-0.5 rounded-full">-2.1%</span>
-            <p className="text-xs text-slate-400">Promedio Diario</p>
-          </div>
-          <div className="h-40 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={miniChartData}>
-                <Bar dataKey="value" fill="#34d399" radius={[4, 4, 4, 4]} opacity={0.8} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+        {/* BAR */}
+        <ChartCard title="Ventas por mes">
+          <ResponsiveContainer width="100%" height={220}>
+            <BarChart data={data}>
+              <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+              <XAxis dataKey="name" tick={{ fontSize: 10 }} />
+              <YAxis tick={{ fontSize: 10 }} />
+              <Tooltip contentStyle={{ fontSize: "12px" }} />
+              <Bar dataKey="ventas" fill="#34d399" />
+            </BarChart>
+          </ResponsiveContainer>
         </ChartCard>
 
-        {/* Gráfico de Proyección */}
-        <ChartCard title="Proyección Operativa" md={4}>
-          <div className="flex items-end justify-between mb-4">
-            <span className="text-xs text-slate-400 font-bold bg-slate-100 dark:bg-zinc-700 px-2 py-0.5 rounded-full">Estimado</span>
-            <p className="text-xs text-slate-400">Meta: 5%</p>
-          </div>
-          <div className="h-40 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={miniChartData}>
-                <Area type="monotone" dataKey="value" stroke="#fbbf24" fill="none" strokeWidth={2} strokeDasharray="4 4" />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
+        {/* AREA */}
+        <ChartCard title="Tendencia usuarios">
+          <ResponsiveContainer width="100%" height={220}>
+            <AreaChart data={data}>
+              <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+              <XAxis dataKey="name" tick={{ fontSize: 10 }} />
+              <YAxis tick={{ fontSize: 10 }} />
+              <Tooltip contentStyle={{ fontSize: "12px" }} />
+              <Area dataKey="usuarios" stroke="#a78bfa" fill="#a78bfa" fillOpacity={0.15} />
+            </AreaChart>
+          </ResponsiveContainer>
         </ChartCard>
 
-        {/* --- Card de Resumen al final (12 cols) --- */}
-        <ChartCard title="Análisis Detallado" colSpan={12} className="h-64">
-          <div className="h-full flex items-center justify-center border-2 border-dashed border-slate-100 dark:border-zinc-800 rounded-xl">
-            <p className="text-slate-400 text-sm">Contenido de tabla o gráfico extendido aquí</p>
-          </div>
+        {/* PIE */}
+        <ChartCard title="Distribución">
+          <ResponsiveContainer width="100%" height={220}>
+            <PieChart>
+              <Pie data={pieData} dataKey="value" innerRadius={40} outerRadius={60}>
+                <Cell fill="#a78bfa" />
+                <Cell fill="#34d399" />
+              </Pie>
+              <Tooltip contentStyle={{ fontSize: "12px" }} />
+            </PieChart>
+          </ResponsiveContainer>
+        </ChartCard>
+
+        {/* COMPOSED */}
+        <ChartCard title="Usuarios vs Ventas">
+          <ResponsiveContainer width="100%" height={220}>
+            <ComposedChart data={data}>
+              <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+              <XAxis dataKey="name" tick={{ fontSize: 10 }} />
+              <YAxis tick={{ fontSize: 10 }} />
+              <Tooltip contentStyle={{ fontSize: "12px" }} />
+              <Bar dataKey="ventas" fill="#34d399" />
+              <Line dataKey="usuarios" stroke="#a78bfa" />
+            </ComposedChart>
+          </ResponsiveContainer>
         </ChartCard>
       </div>
     </div>
