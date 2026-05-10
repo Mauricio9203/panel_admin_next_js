@@ -1,114 +1,93 @@
 "use client";
 
-import { LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar, AreaChart, Area, PieChart, Pie, Cell, ComposedChart } from "recharts";
-
-import Card from "@/components/ui/Card";
-import ChartCard from "./ChartCard";
-import TituloModulo from "@/components/ui/TituloModulo";
+import { useState, useEffect } from "react";
 import { LayoutDashboard } from "lucide-react";
 
+// UI Components
+import { CreditCard, Percent, Users } from "lucide-react";
+import ChartCard from "@/components/ChartCard";
+import TituloModulo from "@/components/ui/TituloModulo";
+import Grid from "@/components/ui/Grid";
+import StatCard from "@/components/ui/StatCard";
+
+// Gráficos Modulares (Asegúrate de que las rutas sean correctas)
+import AreaChartCustom from "@/components/charts/AreaChartCustom";
+import BarChartCustom from "@/components/charts/BarChartCustom";
+import PieChartCustom from "@/components/charts/PieChartCustom";
+
 type Props = {
-  data: {
-    name: string;
-    usuarios: number;
-    ventas: number;
-  }[];
-  pieData: {
-    name: string;
-    value: number;
-  }[];
+  data: { name: string; usuarios: number; ventas: number }[];
+  pieData: { name: string; value: number }[];
 };
 
 export default function DashboardClient({ data, pieData }: Props) {
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  if (!isMounted) return null;
+
   return (
-    <div className="p-4 sm:p-6 space-y-6 bg-white dark:bg-zinc-900 min-h-screen">
-      {/* HEADER */}
+    <div className="p-4 sm:p-6 space-y-6 bg-transparent min-h-screen">
       <TituloModulo titulo="Dashboard" variant="violet" icon={LayoutDashboard} />
 
-      {/* CARDS */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-        <Card>
-          <p className="text-xs text-gray-500">Usuarios</p>
-          <p className="text-lg sm:text-xl md:text-2xl font-semibold truncate">1,240</p>
-        </Card>
+      {/* MÉTRICAS */}
+      {/* SECCIÓN DE MÉTRICAS */}
+      <Grid cols={12} gap={4}>
+        {/* Usuario (que ya teníamos) */}
+        <StatCard
+          title="Usuarios"
+          value="1,240"
+          icon={Users} // Asumiendo que importaste Users de lucide-react
+          color="violet"
+          md={4}
+        />
 
-        <Card>
-          <p className="text-xs text-gray-500">Ventas</p>
-          <p className="text-lg sm:text-xl md:text-2xl font-semibold truncate">$8,320</p>
-        </Card>
+        {/* Ventas - Adaptada */}
+        <StatCard
+          title="Ventas"
+          value="$8,320"
+          icon={CreditCard} // Ícono sugerido para transacciones
+          color="emerald"
+          md={4}
+          trend={{ value: "8.1%", isUp: true }} // Opcional: puedes quitarlo si no tienes el dato
+        />
 
-        <Card>
-          <p className="text-xs text-gray-500">Conversión</p>
-          <p className="text-lg sm:text-xl md:text-2xl font-semibold truncate">4.2%</p>
-        </Card>
-      </div>
+        {/* Conversión - Adaptada */}
+        <StatCard
+          title="Conversión"
+          value="4.2%"
+          icon={Percent} // Ícono sugerido para porcentajes
+          color="amber"
+          md={4}
+          description="Tasa de cierre" // Opcional: una pequeña aclaración
+        />
+      </Grid>
 
-      {/* CHARTS */}
+      {/* SECCIÓN DE GRÁFICOS MODULARIZADOS */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        {/* LINE */}
         <ChartCard title="Usuarios por mes">
-          <ResponsiveContainer width="100%" height={220}>
-            <LineChart data={data}>
-              <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-              <XAxis dataKey="name" tick={{ fontSize: 10 }} />
-              <YAxis tick={{ fontSize: 10 }} />
-              <Tooltip contentStyle={{ fontSize: "12px" }} />
-              <Line dataKey="usuarios" stroke="#a78bfa" strokeWidth={2} />
-            </LineChart>
-          </ResponsiveContainer>
+          <AreaChartCustom data={data} dataKey="usuarios" xKey="name" color="#a78bfa" />
         </ChartCard>
 
-        {/* BAR */}
         <ChartCard title="Ventas por mes">
-          <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={data}>
-              <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-              <XAxis dataKey="name" tick={{ fontSize: 10 }} />
-              <YAxis tick={{ fontSize: 10 }} />
-              <Tooltip contentStyle={{ fontSize: "12px" }} />
-              <Bar dataKey="ventas" fill="#34d399" />
-            </BarChart>
-          </ResponsiveContainer>
+          <BarChartCustom data={data} dataKey="ventas" xKey="name" color="#34d399" />
         </ChartCard>
 
-        {/* AREA */}
-        <ChartCard title="Tendencia usuarios">
-          <ResponsiveContainer width="100%" height={220}>
-            <AreaChart data={data}>
-              <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-              <XAxis dataKey="name" tick={{ fontSize: 10 }} />
-              <YAxis tick={{ fontSize: 10 }} />
-              <Tooltip contentStyle={{ fontSize: "12px" }} />
-              <Area dataKey="usuarios" stroke="#a78bfa" fill="#a78bfa" fillOpacity={0.15} />
-            </AreaChart>
-          </ResponsiveContainer>
+        <ChartCard title="Tendencia de Tráfico">
+          <AreaChartCustom data={data} dataKey="usuarios" xKey="name" color="#a78bfa" />
         </ChartCard>
 
-        {/* PIE */}
         <ChartCard title="Distribución">
-          <ResponsiveContainer width="100%" height={220}>
-            <PieChart>
-              <Pie data={pieData} dataKey="value" innerRadius={40} outerRadius={60}>
-                <Cell fill="#a78bfa" />
-                <Cell fill="#34d399" />
-              </Pie>
-              <Tooltip contentStyle={{ fontSize: "12px" }} />
-            </PieChart>
-          </ResponsiveContainer>
+          <PieChartCustom data={pieData} colors={["#a78bfa", "#34d399"]} />
         </ChartCard>
 
-        {/* COMPOSED */}
-        <ChartCard title="Usuarios vs Ventas">
-          <ResponsiveContainer width="100%" height={220}>
-            <ComposedChart data={data}>
-              <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-              <XAxis dataKey="name" tick={{ fontSize: 10 }} />
-              <YAxis tick={{ fontSize: 10 }} />
-              <Tooltip contentStyle={{ fontSize: "12px" }} />
-              <Bar dataKey="ventas" fill="#34d399" />
-              <Line dataKey="usuarios" stroke="#a78bfa" />
-            </ComposedChart>
-          </ResponsiveContainer>
+        <ChartCard title="Rendimiento Combinado">
+          {/* Si no creaste el ComposedChartCustom, puedes usar el BarChartCustom 
+              o crear uno similar para mantener la estética */}
+          <BarChartCustom data={data} dataKey="ventas" xKey="name" color="#34d399" />
         </ChartCard>
       </div>
     </div>
