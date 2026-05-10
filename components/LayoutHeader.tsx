@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Menu } from "lucide-react";
+import { Menu, Maximize, Minimize } from "lucide-react"; // Importamos iconos nuevos
 import ThemeButton from "@/components/ThemeButton";
 import UserMenu from "@/components/UserMenu";
 
@@ -18,48 +18,58 @@ interface Props {
 export default function LayoutHeader({ collapsed, setCollapsed, setMobileOpen }: Props) {
   const [hydrated, setHydrated] = useState(false);
   const [localCollapsed, setLocalCollapsed] = useState<boolean>(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  /* ---------------- FULLSCREEN LOGIC ---------------- */
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch((e) => {
+        console.error(`Error al intentar activar pantalla completa: ${e.message}`);
+      });
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      }
+    }
+  };
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
+  }, []);
 
   /* ---------------- HYDRATION LOAD ---------------- */
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_COLLAPSED);
-
     const value = saved === "true";
     setLocalCollapsed(value);
     setCollapsed(value);
-
     setHydrated(true);
   }, [setCollapsed]);
 
   /* ---------------- SYNC + SAVE ---------------- */
   useEffect(() => {
     if (!hydrated) return;
-
     localStorage.setItem(STORAGE_COLLAPSED, String(localCollapsed));
     setCollapsed(localCollapsed);
   }, [localCollapsed, hydrated, setCollapsed]);
 
-  /* ---------------- PREVENT FLICKER ---------------- */
   if (!hydrated) {
     return <header className="h-14 flex items-center justify-between px-4 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-black" />;
   }
 
   return (
-    <header
-      className="
-        h-14 flex items-center justify-between
-        px-4 md:pl-4 md:pr-4
-        bg-white dark:bg-black
-        border-b border-gray-200 dark:border-gray-800
-      "
-    >
+    <header className="h-14 flex items-center justify-between px-4 bg-white dark:bg-black border-b border-gray-200 dark:border-gray-800">
       {/* LEFT */}
       <div className="flex items-center gap-2">
-        {/* SIDEBAR TOGGLE (DESKTOP) */}
         <button onClick={() => setLocalCollapsed((v) => !v)} className={`hidden md:flex ${iconBtn}`}>
           <Menu size={18} className={`transition-transform ${localCollapsed ? "rotate-180" : ""}`} />
         </button>
 
-        {/* MOBILE MENU */}
         <button onClick={() => setMobileOpen(true)} className={`md:hidden ${iconBtn}`}>
           <Menu size={18} />
         </button>
@@ -69,7 +79,12 @@ export default function LayoutHeader({ collapsed, setCollapsed, setMobileOpen }:
 
       {/* RIGHT */}
       <div className="flex items-center gap-2">
+        {/* BOTÓN FULLSCREEN */}
+        <button onClick={toggleFullscreen} className={iconBtn} title="Pantalla Completa">
+          {isFullscreen ? <Minimize size={18} /> : <Maximize size={18} />}
+        </button>
         <ThemeButton />
+        <div className="h-6 w-[1px] bg-gray-200 dark:bg-gray-800 mx-1" /> {/* Separador visual opcional */}
         <UserMenu />
       </div>
     </header>
