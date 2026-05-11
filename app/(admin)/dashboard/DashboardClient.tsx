@@ -14,6 +14,7 @@ import StatCard from "@/components/ui/StatCard";
 import AreaChartCustom from "@/components/charts/AreaChartCustom";
 import BarChartCustom from "@/components/charts/BarChartCustom";
 import PieChartCustom from "@/components/charts/PieChartCustom";
+import LineChartCustom from "@/components/charts/LineChart";
 
 type Props = {
   data: { name: string; usuarios: number; ventas: number }[];
@@ -82,6 +83,10 @@ export default function DashboardClient({ data, pieData }: Props) {
 
         <ChartCard title="Distribución">
           <PieChartCustom data={pieData} colors={["#a78bfa", "#34d399"]} />
+        </ChartCard>
+
+        <ChartCard title="Línea">
+          <LineChartCustom data={data} dataKey="usuarios" xKey="name" color="#a78bfa" />
         </ChartCard>
 
         <ChartCard title="Rendimiento Combinado">

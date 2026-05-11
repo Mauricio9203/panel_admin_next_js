@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Menu, Maximize, Minimize } from "lucide-react"; // Importamos iconos nuevos
+import { Menu, Maximize, Minimize, Bell } from "lucide-react"; // Importamos Bell
 import ThemeButton from "@/components/ThemeButton";
 import UserMenu from "@/components/UserMenu";
+import NotificationBell from "@/components/notifications/NotificationBell";
+import { MOCK_NOTIFICATIONS } from "@/constants/notification";
 
 const STORAGE_COLLAPSED = "sidebarCollapsed";
 
@@ -19,6 +21,7 @@ export default function LayoutHeader({ collapsed, setCollapsed, setMobileOpen }:
   const [hydrated, setHydrated] = useState(false);
   const [localCollapsed, setLocalCollapsed] = useState<boolean>(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const notifications = MOCK_NOTIFICATIONS;
 
   /* ---------------- FULLSCREEN LOGIC ---------------- */
   const toggleFullscreen = () => {
@@ -73,18 +76,18 @@ export default function LayoutHeader({ collapsed, setCollapsed, setMobileOpen }:
         <button onClick={() => setMobileOpen(true)} className={`md:hidden ${iconBtn}`}>
           <Menu size={18} />
         </button>
-
-        <h1 className="font-medium text-gray-900 dark:text-gray-100 tracking-wide">Dashboard</h1>
       </div>
 
       {/* RIGHT */}
       <div className="flex items-center gap-2">
         {/* BOTÓN FULLSCREEN */}
+        {/* BOTÓN NOTIFICACIONES */}
+        <NotificationBell initialData={MOCK_NOTIFICATIONS} /> {/* <-- Componente limpio y aislado */}
+        <ThemeButton />
+        <div className="h-6 w-[1px] bg-gray-200 dark:bg-gray-800 mx-1" />
         <button onClick={toggleFullscreen} className={iconBtn} title="Pantalla Completa">
           {isFullscreen ? <Minimize size={18} /> : <Maximize size={18} />}
         </button>
-        <ThemeButton />
-        <div className="h-6 w-[1px] bg-gray-200 dark:bg-gray-800 mx-1" /> {/* Separador visual opcional */}
         <UserMenu />
       </div>
     </header>
