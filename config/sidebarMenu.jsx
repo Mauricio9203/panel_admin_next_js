@@ -15,6 +15,15 @@ export const sidebarMenu = [
       { key: "modulo_base/cargando_modulo", label: "Ejemplo de Carga de Modulo" },
     ],
   },
+      {
+    key: "maps",
+    label: "Multi Mapas",
+    icon: Box,
+    children: [
+      { key: "maps/multi_maps", label: "Multi Mapas" },
+    
+    ],
+  },
   {
     key: "tablas",
     label: "Tablas",
