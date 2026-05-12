@@ -10,8 +10,6 @@ const handler = NextAuth({
         password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
-        // Usuario de prueba para validar que todo funcione
-        // Puedes cambiar estos valores por los que prefieras
         if (credentials?.email === "admin@test.com" && credentials?.password === "1234") {
           return { id: "1", name: "Usuario Desarrollador", email: "admin@test.com" };
         }
@@ -19,14 +17,29 @@ const handler = NextAuth({
       }
     })
   ],
-  // Usamos la variable que ya agregaste al .env.local
   secret: process.env.NEXTAUTH_SECRET,
   session: {
     strategy: "jwt",
+    // 1. Duración máxima de la sesión (24 horas)
+    maxAge: 12 * 60 * 60, 
+    // 2. Cada cuánto tiempo NextAuth actualiza la sesión en la base de datos/cookie
+    // Por ejemplo, si el usuario entra a las 12h, y navega a las 13h, 
+    // su tiempo de expiración se extiende otras 24h desde ese momento.
+    updateAge: 1 * 60 * 60, 
   },
   pages: {
-    signIn: '/login', // Aquí es donde crearemos tu login personalizado
-  }
+    signIn: '/login',
+  },
+  // Opcional: añade callbacks para manejar el token si necesitas más datos
+  callbacks: {
+    async jwt({ token, user }) {
+      return { ...token, ...user };
+    },
+    async session({ session, token }) {
+      session.user = token as any;
+      return session;
+    },
+  },
 });
 
 export { handler as GET, handler as POST };
