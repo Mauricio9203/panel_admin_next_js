@@ -31,7 +31,7 @@ export default function SessionGuard({ children }: SessionGuardProps) {
     }
   };
 
-  const { resetTimers } = useIdleTimer(2, handleWarn, handleLogout);
+  const { resetTimers } = useIdleTimer(15, handleWarn, handleLogout);
 
   // 1. SINCRONIZACIÓN DE ACTIVIDAD: Reinicia timers si otra pestaña tuvo actividad
   useEffect(() => {

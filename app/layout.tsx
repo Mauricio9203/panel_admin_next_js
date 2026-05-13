@@ -4,6 +4,7 @@ import AuthProvider from "@/components/AuthProvider";
 import { ThemeProvider } from "next-themes";
 // 1. Importa el componente
 import SessionGuard from "@/components/SessionGuard";
+import ToasterProvider from "@/components/ToasterProvider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -15,6 +16,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
             {/* 2. Envuelve el children con el guardia de sesión */}
             <SessionGuard>{children}</SessionGuard>
+            <ToasterProvider />
           </ThemeProvider>
         </AuthProvider>
       </body>
