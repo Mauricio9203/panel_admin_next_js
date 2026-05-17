@@ -8,6 +8,7 @@ import { useTheme } from "next-themes";
 import { motion, useSpring, useMotionValue, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/Button";
 import NormalInput from "@/components/ui/Input";
+import { EyeFollow } from "@/components/ui/EyeFollow";
 
 const THEME_CONFIG = {
   dark: {
