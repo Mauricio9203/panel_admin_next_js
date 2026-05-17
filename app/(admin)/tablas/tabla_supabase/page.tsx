@@ -4,6 +4,9 @@ import { LayoutDashboard } from "lucide-react";
 // 1. Cambiamos la importación al nuevo componente de productos
 import ProductosTable from "./ProductosTable";
 
+// 💡 AGREGA ESTA LÍNEA AQUÍ PARA FORZAR EL RENDERIZADO DINÁMICO
+export const dynamic = "force-dynamic";
+
 // Asegúrate de que estas variables estén en tu .env.local (para tu PC) o en Vercel (para producción)
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
 
