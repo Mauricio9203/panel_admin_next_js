@@ -14,14 +14,14 @@ import { useDataTable } from "./DataTable/useDataTable";
 ========================= */
 type RowAction<TData> = {
   label: string;
-  onClick: (row: TData) => void;
-  variant?: "default" | "danger";
+  onClick: (row: TData) => void | Promise<void>; // 1. Permitimos promesas (async)
+  variant?: "default" | "danger" | "outline"; // 2. Agregamos "outline"
 };
 
 type BulkAction<TData> = {
   label: string;
   onClick: (rows: TData[]) => void;
-  variant?: "default" | "danger";
+  variant?: "default" | "danger" | "outline";
 };
 
 export type DataTableProps<TData> = {
@@ -77,7 +77,11 @@ export function DataTable<TData>({
             {/* DESKTOP */}
             <div className="hidden md:flex items-center gap-2">
               {actions.map((action, i) => (
-                <button key={i} onClick={() => action.onClick(selectedData)} className={`px-3 py-1 text-[11px] rounded-md transition font-medium ${action.variant === "danger" ? "bg-red-600 text-white hover:bg-red-700" : "bg-violet-600 text-white hover:bg-violet-700 shadow-sm"}`}>
+                <button
+                  key={i}
+                  onClick={() => action.onClick(selectedData)}
+                  className={`px-3 py-1 text-[11px] rounded-md transition font-medium ${action.variant === "danger" ? "bg-red-600 text-white hover:bg-red-700" : action.variant === "outline" ? "bg-transparent text-violet-600 border border-violet-600 hover:bg-violet-100 dark:hover:bg-violet-800" : "bg-violet-600 text-white hover:bg-violet-700 shadow-sm"}`}
+                >
                   {action.label}
                 </button>
               ))}
@@ -98,7 +102,7 @@ export function DataTable<TData>({
                         action.onClick(selectedData);
                         setMobileMenuOpen(false);
                       }}
-                      className={`w-full text-left px-3 py-2 text-[11px] hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors ${action.variant === "danger" ? "text-red-600" : "text-neutral-700 dark:text-neutral-300"}`}
+                      className={`w-full text-left px-3 py-2 text-[11px] hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors ${action.variant === "danger" ? "text-red-600" : action.variant === "outline" ? "text-violet-600 border border-violet-600" : "text-neutral-700 dark:text-neutral-300"}`}
                     >
                       {action.label}
                     </button>
