@@ -1,7 +1,8 @@
 "use client";
 
 import { flexRender, Table, Header } from "@tanstack/react-table";
-import { Search, Eraser } from "lucide-react"; // Importamos Eraser
+import { useRef } from "react";
+import { Search, Eraser } from "lucide-react";
 import DataTableFilter from "./DataTableFilter";
 
 interface CheckboxProps {
@@ -34,6 +35,8 @@ type Props<TData> = {
 };
 
 export default function DataTableHeader<TData>({ table, activeFilter, setActiveFilter, hasRowActions }: Props<TData>) {
+  const buttonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+
   return (
     <thead className="sticky top-0 z-[10] bg-white/95 dark:bg-neutral-950/95 backdrop-blur-md border-b border-neutral-200 dark:border-neutral-800">
       {table.getHeaderGroups().map((hg) => (
@@ -61,11 +64,12 @@ export default function DataTableHeader<TData>({ table, activeFilter, setActiveF
                     <div className="flex items-center gap-1">
                       {/* Botón de Lupa */}
                       <button
+                        ref={(el) => { buttonRefs.current[header.id] = el; }}
                         onClick={(e) => {
                           e.stopPropagation();
                           setActiveFilter(activeFilter === header.id ? null : header.id);
                         }}
-                        className={`p-1.5 rounded-lg transition-all 
+                        className={`p-1.5 rounded-lg transition-all
                           ${isFiltered ? "bg-violet-600 text-white shadow-sm ring-1 ring-violet-500/50" : activeFilter === header.id ? "bg-violet-100 dark:bg-violet-900 text-violet-600" : "text-neutral-400 hover:text-violet-500 hover:bg-neutral-100 dark:hover:bg-neutral-800"}`}
                       >
                         <Search size={12} strokeWidth={isFiltered ? 3 : 2} />
@@ -88,7 +92,7 @@ export default function DataTableHeader<TData>({ table, activeFilter, setActiveF
                   )}
                 </div>
 
-                {activeFilter === header.id && <DataTableFilter value={(header.column.getFilterValue() as string) ?? ""} columnName={columnName} align={isAtEnd ? "right" : "left"} onChange={(val: string) => header.column.setFilterValue(val || undefined)} onClose={() => setActiveFilter(null)} />}
+                {activeFilter === header.id && <DataTableFilter value={(header.column.getFilterValue() as string) ?? ""} columnName={columnName} anchorEl={buttonRefs.current[header.id]} onChange={(val: string) => header.column.setFilterValue(val || undefined)} onClose={() => setActiveFilter(null)} />}
               </th>
             );
           })}

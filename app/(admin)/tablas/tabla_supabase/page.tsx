@@ -12,7 +12,7 @@ const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env
 
 export default async function Page() {
   // 2. Apuntamos a la tabla "productos" y seleccionamos las columnas que creamos con SQL
-  const { data, error } = await supabase.from("productos").select("id, created_at, nombre, precio, sku, stock");
+  const { data, error } = await supabase.from("productos").select("id, created_at, nombre, precio, sku, stock").order("created_at", { ascending: true });
 
   // Ajustamos el mensaje de error para que sea coherente con el inventario
   if (error) {

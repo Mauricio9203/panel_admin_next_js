@@ -10,7 +10,7 @@ type UseDataTableProps<TData> = {
   onUpdate?: (rowIndex: number, columnId: string, value: any) => void;
 };
 
-export function useDataTable<TData>({ data, columns, pageSize = 5, onUpdate }: UseDataTableProps<TData>) {
+export function useDataTable<TData>({ data, columns, pageSize = 10, onUpdate }: UseDataTableProps<TData>) {
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize });
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -21,6 +21,9 @@ export function useDataTable<TData>({ data, columns, pageSize = 5, onUpdate }: U
   const table = useReactTable({
     data,
     columns,
+    defaultColumn: {
+      filterFn: "includesString",
+    },
     state: {
       pagination,
       sorting,
