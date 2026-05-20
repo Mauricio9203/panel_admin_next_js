@@ -90,8 +90,6 @@ export default function LoginPage() {
     }
   };
 
-  if (!mounted) return null;
-
   return (
     <div className={`relative h-screen w-full flex items-center justify-center overflow-hidden transition-colors duration-700 ${colors.bg}`}>
       {/* --- FONDO ANIMADO --- */}

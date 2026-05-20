@@ -1,0 +1,89 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { useCrud } from "./useCrud";
+
+type UseTableCrudOptions<T extends Record<string, any>> = {
+  initialData: T[];
+  tableName: string;
+  onEdit?: (row: T) => void;
+  deleteLabel?: (row: T) => string;
+};
+
+export function useTableCrud<T extends Record<string, any>>({
+  initialData,
+  tableName,
+  onEdit,
+  deleteLabel = () => "este registro",
+}: UseTableCrudOptions<T>) {
+  const router = useRouter();
+  const { updateRecord, deleteRecord } = useCrud<T>(tableName);
+  const [data, setData] = useState<T[]>(initialData);
+
+  const handleUpdate = async (rowIndex: number, columnId: string, value: any) => {
+    const row = data[rowIndex];
+    const prevValue = row[columnId as keyof T];
+
+    setData((prev) =>
+      prev.map((r, i) => (i === rowIndex ? { ...r, [columnId]: value } : r))
+    );
+
+    toast.promise(updateRecord(row.id, { [columnId]: value } as Partial<T>), {
+      loading: "Guardando...",
+      success: "Guardado",
+      error: () => {
+        setData((prev) =>
+          prev.map((r, i) => (i === rowIndex ? { ...r, [columnId]: prevValue } : r))
+        );
+        return "Error al guardar";
+      },
+    });
+  };
+
+  const handleDelete = (row: T) => {
+    toast.warning(`¿Eliminar ${deleteLabel(row)}?`, {
+      description: "Esta acción no se puede deshacer.",
+      duration: 5000,
+      action: {
+        label: "Eliminar",
+        onClick: () => {
+          toast.promise(
+            (async () => {
+              const ok = await deleteRecord(row.id);
+              if (!ok) throw new Error("No se pudo eliminar el registro.");
+              return true;
+            })(),
+            {
+              loading: "Eliminando...",
+              success: () => {
+                router.refresh();
+                return "Eliminado correctamente";
+              },
+              error: (e) => (e instanceof Error ? e.message : "Error al eliminar"),
+            }
+          );
+        },
+      },
+      cancel: { label: "Cancelar", onClick: () => toast.dismiss() },
+    });
+  };
+
+  const rowActions = (row: T) => [
+    ...(onEdit
+      ? [{ label: "Editar", onClick: () => onEdit(row), variant: "outline" as const }]
+      : []),
+    { label: "Eliminar", onClick: () => handleDelete(row), variant: "danger" as const },
+  ];
+
+  return {
+    data,
+    setData,
+    props: {
+      data,
+      onUpdate: handleUpdate,
+      rowActions,
+    },
+  };
+}

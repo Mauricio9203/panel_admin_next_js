@@ -1,7 +1,7 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 
 // Ajusta las rutas según tu estructura de carpetas
 import DataTableHeader from "./DataTable/DataTableHeader";
@@ -12,6 +12,16 @@ import { useDataTable } from "./DataTable/useDataTable";
 /* =========================
     TYPES
 ========================= */
+export type SelectColumnConfig = {
+  key: string;
+  type: "select";
+  options: Record<string, any>[];
+  labelKey: string;
+  valueKey: string;
+};
+
+export type EditableColumnConfig = string | SelectColumnConfig;
+
 type RowAction<TData> = {
   label: string;
   onClick: (row: TData) => void | Promise<void>; // 1. Permitimos promesas (async)
@@ -27,12 +37,13 @@ type BulkAction<TData> = {
 export type DataTableProps<TData> = {
   data: TData[];
   columns: ColumnDef<TData, any>[];
+  editableColumns?: EditableColumnConfig[];
   pageSize?: number;
   loading?: boolean;
   rowActions?: (row: TData) => RowAction<TData>[];
   bulkActions?: (rows: TData[]) => BulkAction<TData>[];
   onRowClick?: (row: TData) => void;
-  onUpdate?: (rowIndex: number, columnId: string, value: any) => void; // Prop vital para reutilización
+  onUpdate?: (rowIndex: number, columnId: string, value: any) => void;
 };
 
 /* =========================
@@ -41,19 +52,35 @@ export type DataTableProps<TData> = {
 export function DataTable<TData>({
   data,
   columns,
-  pageSize = 5,
+  editableColumns,
+  pageSize = 10,
   loading = false,
   rowActions,
   bulkActions,
   onRowClick,
-  onUpdate, // 1. Extraemos la prop correctamente
+  onUpdate,
 }: DataTableProps<TData>) {
-  // 2. Pasamos la prop onUpdate directamente al hook
+  const processedColumns = useMemo(() => {
+    if (!editableColumns?.length) return columns;
+    return columns.map((col) => {
+      const key = (col as any).accessorKey as string;
+      const config = editableColumns.find((e) =>
+        typeof e === "string" ? e === key : e.key === key
+      );
+      if (!config) return col;
+      const meta =
+        typeof config === "string"
+          ? { editable: true }
+          : { editable: true, type: config.type, options: config.options, labelKey: config.labelKey, valueKey: config.valueKey };
+      return { ...col, meta: { ...((col as any).meta ?? {}), ...meta } };
+    });
+  }, [columns, editableColumns]);
+
   const { table, pagination, handlePageSizeChange, activeFilter, setActiveFilter } = useDataTable({
     data,
-    columns,
+    columns: processedColumns,
     pageSize,
-    onUpdate, // El componente ya no decide qué hacer, solo "pasa el recado"
+    onUpdate,
   });
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
