@@ -42,6 +42,35 @@ export function useTableCrud<T extends Record<string, any>>({
     });
   };
 
+  const handleBulkDelete = (rows: T[]) => {
+    toast.warning(`¿Eliminar ${rows.length} registro${rows.length !== 1 ? "s" : ""}?`, {
+      description: "Esta acción no se puede deshacer.",
+      duration: 5000,
+      action: {
+        label: "Eliminar",
+        onClick: () => {
+          const ids = new Set(rows.map((r) => r.id));
+          toast.promise(
+            (async () => {
+              const results = await Promise.all(rows.map((r) => deleteRecord(r.id)));
+              if (results.some((ok) => !ok)) throw new Error("Algunos registros no pudieron eliminarse.");
+              return results.length;
+            })(),
+            {
+              loading: `Eliminando ${rows.length} registros...`,
+              success: (n) => {
+                setData((prev) => prev.filter((r) => !ids.has(r.id)));
+                return `${n} registro${n !== 1 ? "s" : ""} eliminado${n !== 1 ? "s" : ""}`;
+              },
+              error: (e) => (e instanceof Error ? e.message : "Error al eliminar"),
+            }
+          );
+        },
+      },
+      cancel: { label: "Cancelar", onClick: () => toast.dismiss() },
+    });
+  };
+
   const handleDelete = (row: T) => {
     toast.warning(`¿Eliminar ${deleteLabel(row)}?`, {
       description: "Esta acción no se puede deshacer.",
@@ -58,7 +87,7 @@ export function useTableCrud<T extends Record<string, any>>({
             {
               loading: "Eliminando...",
               success: () => {
-                router.refresh();
+                setData((prev) => prev.filter((r) => r.id !== row.id));
                 return "Eliminado correctamente";
               },
               error: (e) => (e instanceof Error ? e.message : "Error al eliminar"),
@@ -83,6 +112,7 @@ export function useTableCrud<T extends Record<string, any>>({
     props: {
       data,
       onUpdate: handleUpdate,
+      onBulkDelete: handleBulkDelete,
       rowActions,
     },
   };

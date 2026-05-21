@@ -1,6 +1,6 @@
 "use client";
 
-import { MoreHorizontal } from "lucide-react";
+import { MoreVertical } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import DataTablePortal from "./DataTablePortal";
 import { closeAllRowMenus, subscribeCloseAllRowMenus } from "./dataTableEvents";
@@ -96,7 +96,7 @@ export default function DataTableRowActions<TData>({ actions, row }: Props<TData
     <>
       {/* BOTÓN */}
       <button ref={btnRef} onClick={toggle} className="w-7 h-7 rounded-md flex items-center justify-center hover:bg-violet-500/10 transition">
-        <MoreHorizontal size={14} />
+        <MoreVertical size={14} />
       </button>
 
       {/* MENÚ */}

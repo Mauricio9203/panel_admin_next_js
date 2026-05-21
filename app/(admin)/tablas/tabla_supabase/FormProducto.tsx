@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useCrud } from "@/hooks/useCrud";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner"; // 🔥 Importamos toast
+import { toast } from "sonner";
 
 // Componentes del sistema de diseño
 import NormalInput from "@/components/ui/Input";
@@ -12,6 +11,7 @@ import { Package, DollarSign, Hash } from "lucide-react";
 
 type Producto = {
   id: string;
+  created_at: string;
   nombre: string;
   precio: number;
   sku: string | null;
@@ -20,12 +20,11 @@ type Producto = {
 
 interface FormProductoProps {
   productoEdicion?: Producto | null;
-  onExito: () => void;
+  onExito: (record: Producto) => void;
 }
 
 export function FormProducto({ productoEdicion, onExito }: FormProductoProps) {
   const { createRecord, updateRecord, loading } = useCrud<Producto>("productos");
-  const router = useRouter();
 
   // --- ESTADO DEL FORMULARIO ---
   const [formData, setFormData] = useState({
@@ -109,10 +108,9 @@ export function FormProducto({ productoEdicion, onExito }: FormProductoProps) {
     // 🔥 LA MAGIA DE SONNER: Registra la promesa para cambiar el estado del toast dinámicamente
     toast.promise(guardarDatos(), {
       loading: productoEdicion ? "Actualizando producto..." : "Creando producto...",
-      success: () => {
+      success: (record) => {
         setErrors({});
-        router.refresh();
-        setTimeout(() => onExito(), 300); // Cierra el modal de forma fluida
+        setTimeout(() => onExito(record as Producto), 300);
         return productoEdicion ? "¡Producto actualizado con éxito!" : "¡Producto creado con éxito!";
       },
       error: (err) => {

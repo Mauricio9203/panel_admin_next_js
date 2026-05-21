@@ -40,6 +40,12 @@ export default function LoginPage() {
   const isDark = (mounted ? theme : "light") === "dark";
   const colors = isDark ? THEME_CONFIG.dark : THEME_CONFIG.light;
 
+  // Forzamos los colores del input según el tema propio del login,
+  // ignorando la clase dark del HTML (que puede diferir durante la hidratación).
+  const inputClass = isDark
+    ? "[&_input]:!bg-slate-900/80 [&_input]:!border-slate-700 [&_input]:!text-slate-200"
+    : "[&_input]:!bg-white/80 [&_input]:!border-slate-200 [&_input]:!text-slate-700";
+
   // --- Lógica del Mouse Glow ---
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
@@ -146,9 +152,9 @@ export default function LoginPage() {
               )}
             </AnimatePresence>
 
-            <NormalInput label="Email" placeholder="nombre@ejemplo.com" icon={Mail} type="email" size="md" value={email} onChange={(e) => setEmail(e.target.value)} disabled={loading} />
+            <NormalInput label="Email" placeholder="nombre@ejemplo.com" icon={Mail} type="email" size="md" value={email} onChange={(e) => setEmail(e.target.value)} disabled={loading} className={inputClass} />
 
-            <NormalInput label="Password" placeholder="••••••••" icon={Lock} type="password" size="md" value={password} onChange={(e) => setPassword(e.target.value)} disabled={loading} />
+            <NormalInput label="Password" placeholder="••••••••" icon={Lock} type="password" size="md" value={password} onChange={(e) => setPassword(e.target.value)} disabled={loading} className={inputClass} />
 
             <Button type="submit" disabled={loading} className={`w-full font-black uppercase tracking-[0.3em] text-[11px] h-14 mt-2 text-white border-none rounded-2xl shadow-xl transition-all active:scale-95 ${colors.button}`}>
               {loading ? "Iniciando..." : "Ingresar"}

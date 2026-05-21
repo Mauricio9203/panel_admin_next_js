@@ -7,7 +7,11 @@ import { useState, useMemo } from "react";
 import DataTableHeader from "./DataTable/DataTableHeader";
 import DataTableBody from "./DataTable/DataTableBody";
 import DataTablePagination from "./DataTable/DataTablePagination";
+import DataTableToolbar, { TableAction } from "./DataTable/DataTableToolbar";
 import { useDataTable } from "./DataTable/useDataTable";
+import { Trash2 } from "lucide-react";
+
+export type { TableAction };
 
 /* =========================
     TYPES
@@ -38,10 +42,12 @@ export type DataTableProps<TData> = {
   data: TData[];
   columns: ColumnDef<TData, any>[];
   editableColumns?: EditableColumnConfig[];
+  tableActions?: TableAction[];
   pageSize?: number;
   loading?: boolean;
   rowActions?: (row: TData) => RowAction<TData>[];
   bulkActions?: (rows: TData[]) => BulkAction<TData>[];
+  onBulkDelete?: (rows: TData[]) => void;
   onRowClick?: (row: TData) => void;
   onUpdate?: (rowIndex: number, columnId: string, value: any) => void;
 };
@@ -53,10 +59,12 @@ export function DataTable<TData>({
   data,
   columns,
   editableColumns,
+  tableActions,
   pageSize = 10,
   loading = false,
   rowActions,
   bulkActions,
+  onBulkDelete,
   onRowClick,
   onUpdate,
 }: DataTableProps<TData>) {
@@ -98,10 +106,12 @@ export function DataTable<TData>({
       {/* BARRA DE ACCIONES MASIVAS */}
       {hasSelection && (
         <div className="flex items-center justify-between px-3 py-2 border-b border-violet-500/10 bg-violet-500/5 animate-in fade-in duration-200">
-          <span className="text-[11px] text-violet-700 dark:text-violet-300 font-medium">{selectedData.length} seleccionados</span>
+          <span className="text-[11px] text-violet-700 dark:text-violet-300 font-medium">
+            {selectedData.length} seleccionados
+          </span>
 
-          <div className="flex items-center gap-2 relative">
-            {/* DESKTOP */}
+          <div className="flex items-center gap-2">
+            {/* Bulk actions custom (si las hay) */}
             <div className="hidden md:flex items-center gap-2">
               {actions.map((action, i) => (
                 <button
@@ -114,35 +124,34 @@ export function DataTable<TData>({
               ))}
             </div>
 
-            {/* MOBILE */}
-            <div className="md:hidden relative">
-              <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="px-3 py-1 text-[11px] rounded-md bg-violet-600 text-white">
-                Opciones ▾
+            {/* Botón eliminar selección */}
+            {onBulkDelete && (
+              <button
+                onClick={() => onBulkDelete(selectedData)}
+                className="w-8 h-8 rounded-full flex items-center justify-center gap-1 bg-red-500/10 border border-red-500/30 text-red-500 hover:bg-red-500 hover:text-white hover:border-red-500 transition-all group relative"
+                title={`Eliminar ${selectedData.length} registro${selectedData.length !== 1 ? "s" : ""}`}
+              >
+                <Trash2 size={13} />
+                <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center leading-none group-hover:bg-red-700 transition-colors">
+                  {selectedData.length}
+                </span>
               </button>
+            )}
 
-              {mobileMenuOpen && (
-                <div className="absolute right-0 mt-2 w-44 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-md shadow-xl z-50 py-1">
-                  {actions.map((action, i) => (
-                    <button
-                      key={i}
-                      onClick={() => {
-                        action.onClick(selectedData);
-                        setMobileMenuOpen(false);
-                      }}
-                      className={`w-full text-left px-3 py-2 text-[11px] hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors ${action.variant === "danger" ? "text-red-600" : action.variant === "outline" ? "text-violet-600 border border-violet-600" : "text-neutral-700 dark:text-neutral-300"}`}
-                    >
-                      {action.label}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <button onClick={() => table.resetRowSelection()} className="px-2 py-1 text-[11px] rounded-md border border-neutral-300 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition text-neutral-500">
+            {/* Botón deseleccionar */}
+            <button
+              onClick={() => table.resetRowSelection()}
+              className="w-8 h-8 rounded-full flex items-center justify-center border border-neutral-300 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition text-neutral-500 text-[12px]"
+            >
               ✕
             </button>
           </div>
         </div>
+      )}
+
+      {/* TOOLBAR */}
+      {tableActions && tableActions.length > 0 && (
+        <DataTableToolbar actions={tableActions} table={table} />
       )}
 
       {/* ÁREA DE TABLA */}

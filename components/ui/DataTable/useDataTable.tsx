@@ -21,6 +21,7 @@ export function useDataTable<TData>({ data, columns, pageSize = 10, onUpdate }: 
   const table = useReactTable({
     data,
     columns,
+    getRowId: (row: any) => String(row.id),
     defaultColumn: {
       filterFn: "includesString",
     },
