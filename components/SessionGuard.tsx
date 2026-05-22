@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { useIdleTimer } from "@/hooks/useIdleTimer";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
 import { supabase } from "@/lib/supabase";
 import Modal from "./ui/Modal";
@@ -20,7 +20,6 @@ interface SessionGuardProps {
 export default function SessionGuard({ children }: SessionGuardProps) {
   const { session, loading } = useAuth();
   const pathname = usePathname();
-  const router = useRouter();
 
   const [showModal, setShowModal] = useState<boolean>(false);
   const [isLoggingOut, setIsLoggingOut] = useState<boolean>(false);
@@ -29,15 +28,15 @@ export default function SessionGuard({ children }: SessionGuardProps) {
   const isPublicPath = PUBLIC_PATHS.some((p) => pathname.startsWith(p));
 
   /* ──────────────────────────────────────────────────────────────────────
-     PROTECCIÓN DE RUTAS
+     PROTECCIÓN DE RUTAS — sesión
      Redirige al login si no hay sesión y la ruta no es pública.
   ────────────────────────────────────────────────────────────────────── */
   useEffect(() => {
     if (loading) return;
     if (!session && !isPublicPath) {
-      router.push("/login");
+      window.location.href = "/login";
     }
-  }, [loading, session, isPublicPath, router]);
+  }, [loading, session, isPublicPath]);
 
   /* ──────────────────────────────────────────────────────────────────────
      CIERRE DE SESIÓN
@@ -46,9 +45,8 @@ export default function SessionGuard({ children }: SessionGuardProps) {
     if (isLoggingOut) return;
     setIsLoggingOut(true);
     await supabase.auth.signOut();
-    setShowModal(false);
-    router.push("/login");
-  }, [isLoggingOut, router]);
+    window.location.href = "/login";
+  }, [isLoggingOut]);
 
   /* ──────────────────────────────────────────────────────────────────────
      TIMER DE INACTIVIDAD

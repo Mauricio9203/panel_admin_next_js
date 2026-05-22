@@ -38,14 +38,9 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { createClient } from "@supabase/supabase-js";
+import { supabase } from "@/lib/supabase";
 import { SortingState, ColumnFiltersState } from "@tanstack/react-table";
 import { toast } from "sonner";
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
 
 /* ============================
    TIPOS

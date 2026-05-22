@@ -19,7 +19,7 @@ interface SidebarProps {
 
 export default function Sidebar({ collapsed, mobileOpen }: SidebarProps) {
   const pathname = usePathname();
-  const { session } = useAuth();
+  const { session, role, roleLoading } = useAuth();
 
   // Datos del usuario desde la sesión de Supabase
   const user = session?.user;
@@ -39,6 +39,12 @@ export default function Sidebar({ collapsed, mobileOpen }: SidebarProps) {
       [menu]: !prev[menu],
     }));
   };
+
+  // Filtra los ítems según el rol del usuario.
+  // Mientras el rol no se conoce aún (loading o rol no cargado), muestra skeletons.
+  const visibleMenu = role
+    ? sidebarMenu.filter((item) => item.roles?.includes(role))
+    : [];
 
   return (
     <aside
@@ -70,7 +76,16 @@ export default function Sidebar({ collapsed, mobileOpen }: SidebarProps) {
 
       {/* 📂 NAV - Con scroll sutil */}
       <nav className="flex-1 px-2 space-y-1 mt-2 overflow-y-auto custom-scrollbar">
-        {sidebarMenu.map((item) => {
+        {/* Skeletons mientras carga el rol */}
+        {roleLoading && !collapsed && (
+          <div className="space-y-1 px-1 pt-1">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="h-8 rounded-md bg-gray-100 dark:bg-gray-800 animate-pulse" />
+            ))}
+          </div>
+        )}
+
+        {visibleMenu.map((item) => {
           const Icon = item.icon;
           const isActive = pathname === `/${item.key}` || pathname.startsWith(`/${item.key}/`);
           const isOpen = openMenus[item.key] ?? isActive; // Si no se ha tocado, se abre si es la ruta activa

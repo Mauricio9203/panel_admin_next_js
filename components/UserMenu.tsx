@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { MoreVertical } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import Modal from "./ui/Modal";
 
@@ -33,7 +32,6 @@ function DropdownItem({ label, danger, onClick, disabled }: { label: string; dan
     MAIN COMPONENT
 ========================= */
 export default function UserMenu() {
-  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [logoutOpen, setLogoutOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -103,8 +101,7 @@ export default function UserMenu() {
   const handleLogout = async () => {
     setIsLoggingOut(true);
     await supabase.auth.signOut();
-    setLogoutOpen(false);
-    router.push("/login");
+    window.location.href = "/login";
   };
 
   return (

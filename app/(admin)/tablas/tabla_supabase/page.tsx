@@ -1,14 +1,9 @@
-import { createClient } from "@supabase/supabase-js";
 import TituloModulo from "@/components/ui/TituloModulo";
 import { LayoutDashboard } from "lucide-react";
-// 1. Cambiamos la importación al nuevo componente de productos
 import ProductosTable from "./ProductosTable";
+import { supabase } from "@/lib/supabase";
 
-// 💡 AGREGA ESTA LÍNEA AQUÍ PARA FORZAR EL RENDERIZADO DINÁMICO
 export const dynamic = "force-dynamic";
-
-// Asegúrate de que estas variables estén en tu .env.local (para tu PC) o en Vercel (para producción)
-const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
 
 export default async function Page() {
   // 2. Apuntamos a la tabla "productos" y seleccionamos las columnas que creamos con SQL

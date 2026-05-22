@@ -1,7 +1,5 @@
 import { useState } from "react";
-import { createClient } from "@supabase/supabase-js";
-
-const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
+import { supabase } from "@/lib/supabase";
 
 // 1. Usamos un "extends" para asegurar que T sea un objeto indexable básico
 export function useCrud<T extends Record<string, any>>(tableName: string) {
