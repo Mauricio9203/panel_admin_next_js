@@ -1,31 +1,60 @@
 "use client";
+
 import React, { useState, useEffect, useCallback } from "react";
 import { useIdleTimer } from "@/hooks/useIdleTimer";
-import { signOut, useSession } from "next-auth/react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useAuth } from "@/components/AuthProvider";
+import { supabase } from "@/lib/supabase";
 import Modal from "./ui/Modal";
+
+/* ============================
+   RUTAS PÚBLICAS
+   (no requieren sesión activa)
+============================ */
+const PUBLIC_PATHS = ["/login", "/auth"];
 
 interface SessionGuardProps {
   children: React.ReactNode;
 }
 
 export default function SessionGuard({ children }: SessionGuardProps) {
-  const { status } = useSession();
+  const { session, loading } = useAuth();
   const pathname = usePathname();
+  const router = useRouter();
 
   const [showModal, setShowModal] = useState<boolean>(false);
   const [isLoggingOut, setIsLoggingOut] = useState<boolean>(false);
   const [countdown, setCountdown] = useState<number>(60);
 
+  const isPublicPath = PUBLIC_PATHS.some((p) => pathname.startsWith(p));
+
+  /* ──────────────────────────────────────────────────────────────────────
+     PROTECCIÓN DE RUTAS
+     Redirige al login si no hay sesión y la ruta no es pública.
+  ────────────────────────────────────────────────────────────────────── */
+  useEffect(() => {
+    if (loading) return;
+    if (!session && !isPublicPath) {
+      router.push("/login");
+    }
+  }, [loading, session, isPublicPath, router]);
+
+  /* ──────────────────────────────────────────────────────────────────────
+     CIERRE DE SESIÓN
+  ────────────────────────────────────────────────────────────────────── */
   const handleLogout = useCallback(async () => {
     if (isLoggingOut) return;
     setIsLoggingOut(true);
-    await signOut({ callbackUrl: "/login", redirect: true });
+    await supabase.auth.signOut();
     setShowModal(false);
-  }, [isLoggingOut]);
+    router.push("/login");
+  }, [isLoggingOut, router]);
 
+  /* ──────────────────────────────────────────────────────────────────────
+     TIMER DE INACTIVIDAD
+  ────────────────────────────────────────────────────────────────────── */
   const handleWarn = () => {
-    if (status === "authenticated") {
+    if (session) {
       setCountdown(60);
       setShowModal(true);
     }
@@ -33,47 +62,37 @@ export default function SessionGuard({ children }: SessionGuardProps) {
 
   const { resetTimers } = useIdleTimer(15, handleWarn, handleLogout);
 
-  // 1. SINCRONIZACIÓN DE ACTIVIDAD: Reinicia timers si otra pestaña tuvo actividad
+  /* ──────────────────────────────────────────────────────────────────────
+     SINCRONIZACIÓN ENTRE PESTAÑAS
+     Supabase propaga auth via localStorage; este efecto sincroniza
+     la actividad del timer entre pestañas del mismo origen.
+  ────────────────────────────────────────────────────────────────────── */
   useEffect(() => {
     const syncActivity = (event: StorageEvent) => {
-      if (event.key === "last_activity_timestamp" && status === "authenticated") {
-        resetTimers(); // Otra pestaña se movió, reiniciamos esta
-        if (showModal) setShowModal(false); // Si esta pestaña tenía el modal abierto, lo cerramos
+      if (event.key === "last_activity_timestamp" && session) {
+        resetTimers();
+        if (showModal) setShowModal(false);
       }
     };
-
     window.addEventListener("storage", syncActivity);
     return () => window.removeEventListener("storage", syncActivity);
-  }, [status, resetTimers, showModal]);
+  }, [session, resetTimers, showModal]);
 
-  // 2. SINCRONIZACIÓN DE LOGOUT: Si una pestaña cierra sesión, las demás redirigen
-  useEffect(() => {
-    const checkSession = (event: StorageEvent) => {
-      // NextAuth usa estas keys para el broadcast de sesión
-      if (event.key === "next-auth.session-token" || event.key === "__Secure-next-auth.session-token") {
-        if (!event.newValue) {
-          window.location.href = "/login";
-        }
-      }
-    };
-
-    window.addEventListener("storage", checkSession);
-    return () => window.removeEventListener("storage", checkSession);
-  }, []);
-
-  // 3. REGISTRAR ACTIVIDAD: Notifica a otras pestañas que nos movimos
+  /* ──────────────────────────────────────────────────────────────────────
+     REGISTRO DE ACTIVIDAD ENTRE PESTAÑAS
+  ────────────────────────────────────────────────────────────────────── */
   useEffect(() => {
     const updateActivity = () => {
       localStorage.setItem("last_activity_timestamp", Date.now().toString());
     };
-
     const events = ["mousedown", "mousemove", "keypress", "scroll", "touchstart"];
     events.forEach((e) => window.addEventListener(e, updateActivity));
-
     return () => events.forEach((e) => window.removeEventListener(e, updateActivity));
   }, []);
 
-  // Efecto para la cuenta regresiva
+  /* ──────────────────────────────────────────────────────────────────────
+     CUENTA REGRESIVA DEL MODAL
+  ────────────────────────────────────────────────────────────────────── */
   useEffect(() => {
     let timer: NodeJS.Timeout;
     if (showModal && countdown > 0) {
@@ -90,7 +109,11 @@ export default function SessionGuard({ children }: SessionGuardProps) {
     localStorage.setItem("last_activity_timestamp", Date.now().toString());
   };
 
-  if (status !== "authenticated" || pathname === "/login") {
+  /* ──────────────────────────────────────────────────────────────────────
+     RENDER
+     Mientras carga o en rutas públicas: solo hijos, sin modal de sesión.
+  ────────────────────────────────────────────────────────────────────── */
+  if (!session || isPublicPath) {
     return <>{children}</>;
   }
 
@@ -107,10 +130,15 @@ export default function SessionGuard({ children }: SessionGuardProps) {
             <span className="text-3xl font-mono font-bold text-violet-600 dark:text-violet-400">{countdown}</span>
           </div>
           <p className="text-sm text-center text-slate-600 dark:text-slate-400">
-            Tu sesión se cerrará automáticamente en <span className="font-bold text-slate-900 dark:text-white">{countdown} segundos</span>.
+            Tu sesión se cerrará automáticamente en{" "}
+            <span className="font-bold text-slate-900 dark:text-white">{countdown} segundos</span>.
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-3 mt-8 w-full">
-            <button onClick={stayConnected} disabled={isLoggingOut} className="w-full px-4 py-3 text-xs font-bold uppercase tracking-wider rounded-xl bg-violet-600 text-white hover:bg-violet-700 transition-all shadow-lg shadow-violet-600/20 active:scale-95">
+            <button
+              onClick={stayConnected}
+              disabled={isLoggingOut}
+              className="w-full px-4 py-3 text-xs font-bold uppercase tracking-wider rounded-xl bg-violet-600 text-white hover:bg-violet-700 transition-all shadow-lg shadow-violet-600/20 active:scale-95"
+            >
               Seguir trabajando
             </button>
             <button

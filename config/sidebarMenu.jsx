@@ -1,4 +1,4 @@
-import { LayoutDashboard, Table2, Box } from "lucide-react";
+import { LayoutDashboard, Table2, Box, ServerIcon } from "lucide-react";
 
 export const sidebarMenu = [
   {
@@ -29,8 +29,9 @@ export const sidebarMenu = [
     label: "Tablas",
     icon: Table2,
     children: [
-      { key: "tablas/tabla_base", label: "Tabla Base" },
-      { key: "tablas/tabla_supabase", label: "Tabla Supabase" },
+      { key: "tablas/tabla_base",     label: "Tabla Base" },
+      { key: "tablas/tabla_supabase", label: "Tabla Supabase (Cliente)" },
+      { key: "tablas/tabla_server",   label: "Tabla Server-Side", icon: ServerIcon },
     ],
   },
   {

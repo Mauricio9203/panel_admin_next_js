@@ -66,18 +66,41 @@ function Checkbox({ checked, onChange }: { checked: boolean; onChange: () => voi
   );
 }
 
+// Anchos deterministas para las celdas skeleton (evita Math.random en render)
+const SKELETON_WIDTHS = ["72%", "45%", "60%", "55%", "78%", "40%", "65%", "50%"];
+
 export default function DataTableBody<TData extends RowData>({ table, loading = false, rowActions, onRowClick }: any) {
   const rows = table.getPaginationRowModel().rows;
-  const totalColumns = table.getAllColumns().length + (rowActions ? 1 : 0) + 1;
+  const visibleCols = table.getVisibleLeafColumns();
+  const totalColumns = visibleCols.length + (rowActions ? 1 : 0) + 1; // +1 checkbox
 
   return (
     <tbody>
       {loading ? (
-        <tr>
-          <td colSpan={totalColumns} className="py-10 text-center text-xs text-neutral-500">
-            Cargando...
-          </td>
-        </tr>
+        // Skeleton: imita la estructura real de la tabla mientras carga
+        Array.from({ length: 8 }).map((_, i) => (
+          <tr key={i} className="border-t border-neutral-100 dark:border-neutral-800/50">
+            {/* Checkbox */}
+            <td className="w-12 px-4 py-2">
+              <div className="w-4 h-4 rounded-[3px] bg-neutral-100 dark:bg-neutral-800 animate-pulse mx-auto" />
+            </td>
+            {/* Celdas de datos */}
+            {visibleCols.map((_col: any, j: number) => (
+              <td key={j} className="px-3 py-2.5">
+                <div
+                  className="h-3 rounded-full bg-neutral-100 dark:bg-neutral-800 animate-pulse"
+                  style={{ width: SKELETON_WIDTHS[j % SKELETON_WIDTHS.length] }}
+                />
+              </td>
+            ))}
+            {/* Columna de acciones */}
+            {rowActions && (
+              <td className="px-2 py-0 w-8">
+                <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 animate-pulse mx-auto" />
+              </td>
+            )}
+          </tr>
+        ))
       ) : rows.length === 0 ? (
         <tr>
           <td colSpan={totalColumns} className="py-12 text-center text-xs text-neutral-500">

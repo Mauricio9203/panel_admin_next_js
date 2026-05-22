@@ -11,14 +11,21 @@ type Props = {
   canNext: boolean;
   onPrevious: () => void;
   onNext: () => void;
+  /** Total de registros en la BD (disponible en modo server-side). */
+  totalCount?: number;
 };
 
-export default function DataTablePagination({ pageIndex, pageCount, pageSize, onPageSizeChange, canPrevious, canNext, onPrevious, onNext }: Props) {
+export default function DataTablePagination({ pageIndex, pageCount, pageSize, onPageSizeChange, canPrevious, canNext, onPrevious, onNext, totalCount }: Props) {
   return (
     <div className="flex items-center justify-between px-3 py-2 text-[11px] border-t border-violet-500/10">
       {/* INFO PAGINACIÓN */}
-      <div className="text-neutral-500">
-        {pageIndex + 1} / {pageCount}
+      <div className="text-neutral-500 flex items-center gap-1.5">
+        <span>Pág. {pageIndex + 1} / {pageCount}</span>
+        {totalCount !== undefined && (
+          <span className="text-neutral-400 dark:text-neutral-600">
+            · {totalCount.toLocaleString()} registros
+          </span>
+        )}
       </div>
 
       {/* CONTROLES */}

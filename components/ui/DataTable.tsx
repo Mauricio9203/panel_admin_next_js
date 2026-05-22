@@ -1,6 +1,6 @@
 "use client";
 
-import { ColumnDef } from "@tanstack/react-table";
+import { ColumnDef, SortingState, ColumnFiltersState, PaginationState } from "@tanstack/react-table";
 import { useState, useMemo } from "react";
 
 // Ajusta las rutas según tu estructura de carpetas
@@ -50,6 +50,23 @@ export type DataTableProps<TData> = {
   onBulkDelete?: (rows: TData[]) => void;
   onRowClick?: (row: TData) => void;
   onUpdate?: (rowIndex: number, columnId: string, value: any) => void;
+
+  /**
+   * Props server-side inyectados automáticamente por useServerTable.
+   * No hace falta pasarlos a mano: usa el spread {...props} del hook.
+   */
+  serverSide?: boolean;
+  pageCount?: number;
+  /** Total de registros en la BD (para paginación y límite de exportación). */
+  totalCount?: number;
+  /** En modo server-side: fetcha todos los registros filtrados para exportar. */
+  fetchAllRows?: () => Promise<any[]>;
+  pagination?: PaginationState;
+  onPaginationChange?: (p: PaginationState) => void;
+  sorting?: SortingState;
+  onSortingChange?: (s: SortingState) => void;
+  columnFilters?: ColumnFiltersState;
+  onColumnFiltersChange?: (f: ColumnFiltersState) => void;
 };
 
 /* =========================
@@ -67,6 +84,17 @@ export function DataTable<TData>({
   onBulkDelete,
   onRowClick,
   onUpdate,
+  // Server-side
+  serverSide,
+  pageCount,
+  totalCount,
+  fetchAllRows,
+  pagination: externalPagination,
+  onPaginationChange,
+  sorting: externalSorting,
+  onSortingChange,
+  columnFilters: externalColumnFilters,
+  onColumnFiltersChange,
 }: DataTableProps<TData>) {
   const processedColumns = useMemo(() => {
     if (!editableColumns?.length) return columns;
@@ -89,6 +117,15 @@ export function DataTable<TData>({
     columns: processedColumns,
     pageSize,
     onUpdate,
+    // Server-side passthrough
+    serverSide,
+    pageCount,
+    externalPagination,
+    onExternalPaginationChange: onPaginationChange,
+    externalSorting,
+    onExternalSortingChange: onSortingChange,
+    externalColumnFilters,
+    onExternalColumnFiltersChange: onColumnFiltersChange,
   });
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -151,7 +188,12 @@ export function DataTable<TData>({
 
       {/* TOOLBAR */}
       {tableActions && tableActions.length > 0 && (
-        <DataTableToolbar actions={tableActions} table={table} />
+        <DataTableToolbar
+          actions={tableActions}
+          table={table}
+          fetchAllRows={fetchAllRows}
+          totalCount={totalCount}
+        />
       )}
 
       {/* ÁREA DE TABLA */}
@@ -173,6 +215,7 @@ export function DataTable<TData>({
         canNext={table.getCanNextPage()}
         onPrevious={() => table.previousPage()}
         onNext={() => table.nextPage()}
+        totalCount={totalCount}
       />
     </div>
   );

@@ -1,21 +1,12 @@
-// proxy.ts (o middleware.ts si decides mantener el nombre y solo arreglar la función)
-import { withAuth } from "next-auth/middleware";
+// proxy.ts — Next.js 16 middleware
+// La autenticación la maneja SessionGuard en el cliente (Supabase usa localStorage).
+// Este archivo simplemente deja pasar todas las rutas sin bloquear.
+import { NextResponse } from "next/server";
 
-export default withAuth(
-  function middleware(req) {
-    // Aquí puedes agregar lógica personalizada si la necesitas en el futuro
-  },
-  {
-    callbacks: {
-      authorized: ({ token }) => !!token, // Retorna true si hay un token (usuario logueado)
-    },
-    pages: {
-      signIn: "/login", // Redirige aquí si no está autorizado
-    },
-  }
-);
+export default function middleware() {
+  return NextResponse.next();
+}
 
-export const config = { 
-  // Protegemos el dashboard y cualquier ruta bajo (admin)
-  matcher: ["/dashboard/:path*", "/tablas/:path*", "/componentes/:path*"] 
+export const config = {
+  matcher: ["/dashboard/:path*", "/tablas/:path*", "/componentes/:path*"],
 };

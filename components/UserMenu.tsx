@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { MoreVertical } from "lucide-react";
-import { signOut } from "next-auth/react"; // <--- Importación de NextAuth
+import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase";
 import Modal from "./ui/Modal";
 
 /* =========================
@@ -32,9 +33,10 @@ function DropdownItem({ label, danger, onClick, disabled }: { label: string; dan
     MAIN COMPONENT
 ========================= */
 export default function UserMenu() {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [logoutOpen, setLogoutOpen] = useState(false);
-  const [isLoggingOut, setIsLoggingOut] = useState(false); // Estado de carga para el cierre
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const buttonRef = useRef<HTMLButtonElement | null>(null);
   const dropdownRef = useRef<HTMLDivElement | null>(null);
@@ -100,12 +102,9 @@ export default function UserMenu() {
   ========================= */
   const handleLogout = async () => {
     setIsLoggingOut(true);
-    // Borra la sesión y redirige al login
-    await signOut({
-      callbackUrl: "/login",
-      redirect: true,
-    });
+    await supabase.auth.signOut();
     setLogoutOpen(false);
+    router.push("/login");
   };
 
   return (

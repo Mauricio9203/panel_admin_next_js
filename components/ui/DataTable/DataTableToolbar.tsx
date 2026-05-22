@@ -2,9 +2,11 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Table } from "@tanstack/react-table";
-import { Download, ChevronDown, Plus, X, FileText, FileSpreadsheet, Braces } from "lucide-react";
+import { Download, ChevronDown, Plus, FileText, FileSpreadsheet, Braces } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/Button";
+import * as XLSX from "xlsx";
+import { toast } from "sonner";
 
 /* ===========================
    TIPOS EXPORTADOS
@@ -25,69 +27,87 @@ export type ExportAction = {
 export type TableAction = CustomAction | ExportAction;
 
 /* ===========================
+   TIPOS INTERNOS
+=========================== */
+type ExportData = { headers: string[]; rows: any[][] };
+
+/* ===========================
    UTILIDADES DE EXPORTACIÓN
 =========================== */
-function getExportRows(table: Table<any>) {
-  const cols = table.getAllLeafColumns().filter((col) => {
+
+/** Columnas visibles con accessorKey (excluye columnas de UI como acciones). */
+function getVisibleCols(table: Table<any>) {
+  return table.getAllLeafColumns().filter((col) => {
     const def = col.columnDef as any;
     return def.accessorKey && col.getIsVisible();
   });
-  const headers = cols.map((col) => {
-    const h = col.columnDef.header;
-    return typeof h === "string" ? h : col.id;
-  });
-  const rows = table.getFilteredRowModel().rows.map((row) =>
-    cols.map((col) => row.getValue(col.id) ?? "")
-  );
+}
+
+/** Obtiene headers + filas desde el modelo filtrado del cliente. */
+function getClientExportData(table: Table<any>): ExportData {
+  const cols = getVisibleCols(table);
+  const headers = cols.map((col) => (typeof col.columnDef.header === "string" ? col.columnDef.header : col.id));
+  const rows    = table.getFilteredRowModel().rows.map((row) => cols.map((col) => row.getValue(col.id) ?? ""));
   return { headers, rows };
 }
 
-function triggerDownload(content: string, filename: string, mimeType: string) {
-  const blob = new Blob([content], { type: mimeType });
+/** Obtiene headers + filas a partir de datos crudos (para exportación server-side). */
+function getServerExportData(table: Table<any>, rawData: any[]): ExportData {
+  const cols    = getVisibleCols(table);
+  const headers = cols.map((col) => (typeof col.columnDef.header === "string" ? col.columnDef.header : col.id));
+  const rows    = rawData.map((item) => cols.map((col) => item[(col.columnDef as any).accessorKey] ?? ""));
+  return { headers, rows };
+}
+
+function triggerBlobDownload(blob: Blob, filename: string) {
   const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
+  const a   = document.createElement("a");
+  a.href     = url;
   a.download = filename;
   a.click();
   URL.revokeObjectURL(url);
 }
 
-function exportCSV(table: Table<any>, filename: string) {
-  const { headers, rows } = getExportRows(table);
+function doExportCSV({ headers, rows }: ExportData, filename: string) {
   const escape = (v: any) => {
     const s = String(v);
-    return s.includes(",") || s.includes('"') || s.includes("\n") ? `"${s.replace(/"/g, '""')}"` : s;
+    return s.includes(",") || s.includes('"') || s.includes("\n")
+      ? `"${s.replace(/"/g, '""')}"`
+      : s;
   };
   const csv = [headers, ...rows].map((r) => r.map(escape).join(",")).join("\n");
-  triggerDownload("﻿" + csv, `${filename}.csv`, "text/csv;charset=utf-8");
+  triggerBlobDownload(new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" }), `${filename}.csv`);
 }
 
-function exportJSON(table: Table<any>, filename: string) {
-  const { headers, rows } = getExportRows(table);
+function doExportJSON({ headers, rows }: ExportData, filename: string) {
   const data = rows.map((row) => Object.fromEntries(headers.map((h, i) => [h, row[i]])));
-  triggerDownload(JSON.stringify(data, null, 2), `${filename}.json`, "application/json");
+  triggerBlobDownload(new Blob([JSON.stringify(data, null, 2)], { type: "application/json" }), `${filename}.json`);
 }
 
-function exportExcel(table: Table<any>, filename: string) {
-  const { headers, rows } = getExportRows(table);
-  const cell = (value: any) => {
-    const v = value ?? "";
-    const isNum = typeof v === "number";
-    return `<Cell><Data ss:Type="${isNum ? "Number" : "String"}">${String(v).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")}</Data></Cell>`;
-  };
-  const xmlRows = [
-    `<Row>${headers.map((h) => cell(h)).join("")}</Row>`,
-    ...rows.map((row) => `<Row>${row.map(cell).join("")}</Row>`),
-  ].join("\n");
-  const xml = `<?xml version="1.0" encoding="UTF-8"?><?mso-application progid="Excel.Sheet"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"><Worksheet ss:Name="Datos"><Table>${xmlRows}</Table></Worksheet></Workbook>`;
-  triggerDownload(xml, `${filename}.xls`, "application/vnd.ms-excel;charset=utf-8");
+function doExportExcel({ headers, rows }: ExportData, filename: string) {
+  const worksheet = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+
+  worksheet["!cols"] = headers.map((h, i) => ({
+    wch: Math.min(Math.max(String(h).length, ...rows.map((r) => String(r[i] ?? "").length)) + 2, 50),
+  }));
+
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Datos");
+
+  const buffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+  triggerBlobDownload(
+    new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }),
+    `${filename}.xlsx`
+  );
 }
 
 const FORMAT_CONFIG = {
   csv:   { label: "CSV (.csv)",   Icon: FileText },
-  excel: { label: "Excel (.xls)", Icon: FileSpreadsheet },
+  excel: { label: "Excel (.xlsx)", Icon: FileSpreadsheet },
   json:  { label: "JSON (.json)", Icon: Braces },
 } as const;
+
+const EXPORT_LIMIT = 50_000;
 
 /* ===========================
    COMPONENTE
@@ -95,11 +115,15 @@ const FORMAT_CONFIG = {
 type Props<TData> = {
   actions: TableAction[];
   table: Table<TData>;
+  /** En modo server-side: función que carga TODOS los datos filtrados desde Supabase. */
+  fetchAllRows?: () => Promise<any[]>;
+  /** Total de registros (para mostrar advertencia si supera el límite). */
+  totalCount?: number;
 };
 
-export default function DataTableToolbar<TData>({ actions, table }: Props<TData>) {
+export default function DataTableToolbar<TData>({ actions, table, fetchAllRows, totalCount }: Props<TData>) {
   const [exportOpen, setExportOpen] = useState(false);
-  const [fabOpen, setFabOpen]       = useState(false);
+  const [fabOpen,    setFabOpen]    = useState(false);
   const exportRef = useRef<HTMLDivElement>(null);
 
   const exportAction  = actions.find((a): a is ExportAction  => "type" in a && a.type === "export");
@@ -115,27 +139,74 @@ export default function DataTableToolbar<TData>({ actions, table }: Props<TData>
     return () => document.removeEventListener("mousedown", handler);
   }, [exportOpen]);
 
+  /* ===========================
+     LÓGICA DE EXPORTACIÓN
+  =========================== */
+
+  /** Genera y descarga el archivo con los datos ya obtenidos. */
+  const generateFile = (exportData: ExportData, format: "csv" | "excel" | "json") => {
+    if (format === "csv")   doExportCSV(exportData, filename);
+    if (format === "json")  doExportJSON(exportData, filename);
+    if (format === "excel") doExportExcel(exportData, filename);
+  };
+
+  /** Exportación server-side: fetch de todos los registros filtrados + descarga. */
+  const runServerExport = (format: "csv" | "excel" | "json") => {
+    toast.promise(
+      (async () => {
+        const rawData    = await fetchAllRows!();
+        const exportData = getServerExportData(table as Table<any>, rawData);
+        generateFile(exportData, format);
+        return rawData.length;
+      })(),
+      {
+        loading: "Preparando exportación...",
+        success: (n: number) => `${n.toLocaleString()} registros exportados`,
+        error:   (e: any)    => `Error al exportar: ${e?.message ?? "error desconocido"}`,
+      }
+    );
+  };
+
   const handleExport = (format: "csv" | "excel" | "json") => {
     setExportOpen(false);
     setFabOpen(false);
-    if (format === "csv")   exportCSV(table, filename);
-    if (format === "json")  exportJSON(table, filename);
-    if (format === "excel") exportExcel(table, filename);
+
+    if (fetchAllRows) {
+      // Server-side: advertir si hay muchos registros
+      if (totalCount && totalCount > EXPORT_LIMIT) {
+        toast.warning(`Son ${totalCount.toLocaleString()} registros. Esto puede tardar un momento.`, {
+          description: "¿Deseas continuar con la exportación?",
+          duration: 8000,
+          action: {
+            label: "Exportar igual",
+            onClick: () => runServerExport(format),
+          },
+          cancel: { label: "Cancelar", onClick: () => toast.dismiss() },
+        });
+        return;
+      }
+      runServerExport(format);
+    } else {
+      // Cliente: todos los datos ya están en memoria
+      generateFile(getClientExportData(table as Table<any>), format);
+    }
   };
 
-  // Todas las opciones del speed dial (export formats + custom actions)
+  /* ===========================
+     SPEED DIAL ITEMS
+  =========================== */
   const speedDialItems = [
     ...(exportAction?.formats ?? []).map((fmt) => ({
-      key: fmt,
+      key:   fmt,
       label: FORMAT_CONFIG[fmt].label,
-      Icon: FORMAT_CONFIG[fmt].Icon,
+      Icon:  FORMAT_CONFIG[fmt].Icon,
       onClick: () => handleExport(fmt),
       color: "bg-neutral-700 dark:bg-neutral-600",
     })),
     ...customActions.map((a, i) => ({
-      key: `custom-${i}`,
+      key:   `custom-${i}`,
       label: a.label,
-      Icon: (a.icon ?? Plus) as React.ComponentType<{ size?: number }>,
+      Icon:  (a.icon ?? Plus) as React.ComponentType<{ size?: number }>,
       onClick: () => { setFabOpen(false); a.onClick(); },
       color: a.variant === "danger" ? "bg-red-500" : "bg-violet-600",
     })),
@@ -177,7 +248,6 @@ export default function DataTableToolbar<TData>({ actions, table }: Props<TData>
 
       {/* ── MOBILE FAB SPEED DIAL ── */}
       <div className="md:hidden">
-        {/* Overlay */}
         <AnimatePresence>
           {fabOpen && (
             <motion.div
@@ -192,24 +262,20 @@ export default function DataTableToolbar<TData>({ actions, table }: Props<TData>
           )}
         </AnimatePresence>
 
-        {/* Speed dial container */}
         <div className="fixed bottom-6 right-6 z-50 flex flex-col-reverse items-end gap-3">
-          {/* Speed dial items */}
           <AnimatePresence>
             {fabOpen && speedDialItems.map((item, i) => (
               <motion.div
                 key={item.key}
                 initial={{ opacity: 0, y: 16, scale: 0.8 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
+                animate={{ opacity: 1, y: 0,  scale: 1   }}
                 exit={{ opacity: 0, y: 16, scale: 0.8 }}
                 transition={{ duration: 0.18, delay: i * 0.05 }}
                 className="flex items-center gap-3"
               >
-                {/* Label */}
                 <span className="bg-white dark:bg-neutral-800 text-neutral-800 dark:text-neutral-100 text-[12px] font-medium px-3 py-1.5 rounded-lg shadow-lg whitespace-nowrap">
                   {item.label}
                 </span>
-                {/* Mini FAB */}
                 <button
                   onClick={item.onClick}
                   className={`w-12 h-12 rounded-full ${item.color} text-white flex items-center justify-center shadow-lg active:scale-95 transition-transform`}
@@ -220,7 +286,6 @@ export default function DataTableToolbar<TData>({ actions, table }: Props<TData>
             ))}
           </AnimatePresence>
 
-          {/* Main FAB */}
           <motion.button
             onClick={() => setFabOpen((o) => !o)}
             className="w-14 h-14 rounded-full bg-violet-600 text-white flex items-center justify-center shadow-xl active:scale-95"

@@ -20,6 +20,7 @@ type Producto = {
 
 interface FormProductoProps {
   productoEdicion?: Producto | null;
+  /** Recibe el registro creado/editado. En modo server-side puedes ignorar el argumento y llamar refetch(). */
   onExito: (record: Producto) => void;
 }
 

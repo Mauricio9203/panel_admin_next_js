@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "@/components/ui/DataTable";
-import { useTableCrud } from "@/hooks/useTableCrud";
+import { useSupabaseTable } from "@/hooks/useSupabaseTable";
 import { Plus } from "lucide-react";
 import Modal from "@/components/ui/Modal";
 import { FormProducto } from "./FormProducto";
@@ -40,9 +40,10 @@ export default function ProductosTable({ initialData }: ProductosTableProps) {
   const [modalAbierto, setModalAbierto] = useState(false);
   const [productoAEditar, setProductoAEditar] = useState<Producto | null>(null);
 
-  const { setData, props } = useTableCrud({
-    initialData,
+  const { setData, props } = useSupabaseTable<Producto>({
+    mode: "client",          // ← todos los datos en memoria
     tableName: "productos",
+    initialData,
     onEdit: (row) => { setProductoAEditar(row); setModalAbierto(true); },
     deleteLabel: (row) => `"${row.nombre}"`,
   });
