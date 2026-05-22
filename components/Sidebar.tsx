@@ -4,7 +4,8 @@ import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { sidebarMenu } from "@/config/sidebarMenu";
 import { usePathname } from "next/navigation";
-import Link from "next/link"; // Fundamental para evitar el pestañeo
+import Link from "next/link";
+import { useAuth } from "@/components/AuthProvider";
 
 /* 🧠 TIPOS */
 type MenuKey = (typeof sidebarMenu)[number]["key"];
@@ -18,6 +19,16 @@ interface SidebarProps {
 
 export default function Sidebar({ collapsed, mobileOpen }: SidebarProps) {
   const pathname = usePathname();
+  const { session } = useAuth();
+
+  // Datos del usuario desde la sesión de Supabase
+  const user = session?.user;
+  const userName  = user?.user_metadata?.full_name ?? user?.user_metadata?.name ?? user?.email?.split("@")[0] ?? "Usuario";
+  const userEmail = user?.email ?? "";
+  const avatarUrl = user?.user_metadata?.avatar_url ?? user?.user_metadata?.picture ?? null;
+
+  // Iniciales para el fallback del avatar
+  const initials = userName.split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase();
 
   // Estado para manejar qué menús están desplegados manualmente
   const [openMenus, setOpenMenus] = useState<OpenMenus>({});
@@ -130,11 +141,24 @@ export default function Sidebar({ collapsed, mobileOpen }: SidebarProps) {
       {/* 👤 USER / FOOTER */}
       <div className="p-3 border-t border-gray-200 dark:border-gray-800">
         <div className={`flex items-center gap-3 rounded-md px-2 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all ${collapsed ? "justify-center" : ""}`}>
-          <img src="/avatar.png" alt="User" className="w-8 h-8 rounded-full object-cover" />
+          {/* Avatar: foto de Google o iniciales */}
+          {avatarUrl ? (
+            <img
+              src={avatarUrl}
+              alt={userName}
+              referrerPolicy="no-referrer"
+              className="w-8 h-8 rounded-full object-cover shrink-0"
+            />
+          ) : (
+            <div className="w-8 h-8 rounded-full bg-violet-600 flex items-center justify-center shrink-0">
+              <span className="text-[11px] font-bold text-white">{initials}</span>
+            </div>
+          )}
+
           {!collapsed && (
-            <div className="flex flex-col leading-tight">
-              <span className="text-sm font-medium text-gray-900 dark:text-neutral-100">Mauri</span>
-              <span className="text-[11px] text-gray-500 dark:text-neutral-400">Administrador</span>
+            <div className="flex flex-col leading-tight min-w-0">
+              <span className="text-sm font-medium text-gray-900 dark:text-neutral-100 truncate">{userName}</span>
+              <span className="text-[11px] text-gray-500 dark:text-neutral-400 truncate">{userEmail}</span>
             </div>
           )}
         </div>
