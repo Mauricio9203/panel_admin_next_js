@@ -51,13 +51,40 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
   const roleFetched = useRef(false);
 
   useEffect(() => {
+    /* ── 1. Hidratación inmediata ──────────────────────────────────────────
+       getSession() lee desde localStorage sin hacer llamada de red.
+       Así el spinner desaparece de inmediato en lugar de esperar el evento
+       INITIAL_SESSION de onAuthStateChange (que puede tardar en Next.js 16).
+    ──────────────────────────────────────────────────────────────────────── */
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      setSession(session);
+      setLoading(false);
+
+      if (session && !roleFetched.current) {
+        roleFetched.current = true;
+        setRoleLoading(true);
+        try {
+          const r = await fetchRole(session.user.id);
+          setRole(r);
+        } catch {
+          setRole(null);
+        } finally {
+          setRoleLoading(false);
+        }
+      }
+    });
+
+    /* ── 2. Escucha cambios futuros (login, logout, refresco de token) ─────
+       INITIAL_SESSION se ignora porque ya lo manejó getSession() arriba.
+    ──────────────────────────────────────────────────────────────────────── */
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        if (event === "INITIAL_SESSION") return;
+
         setSession(session);
         setLoading(false);
 
         if (session) {
-          // Busca el rol solo si aún no lo tenemos para esta sesión
           if (!roleFetched.current) {
             roleFetched.current = true;
             setRoleLoading(true);
@@ -78,6 +105,7 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
         }
       }
     );
+
     return () => subscription.unsubscribe();
   }, []);
 

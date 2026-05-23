@@ -3,7 +3,6 @@
 import { useState, useTransition } from "react";
 import { Check, RotateCcw, Save } from "lucide-react";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
 import type { ThemePreset } from "@/config/themePresets";
 import type { PanelTheme } from "@/config/theme";
 import { DEFAULT_THEME } from "@/config/theme";
@@ -201,7 +200,6 @@ export default function AparienciaClient({
   currentRadius,
   currentTheme,
 }: Props) {
-  const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
   const [selectedPresetId, setSelectedPresetId] = useState(activePresetId);
@@ -235,8 +233,9 @@ export default function AparienciaClient({
     startTransition(async () => {
       try {
         await saveTheme(previewTheme);
-        toast.success("Tema guardado correctamente");
-        router.refresh();
+        // Hard reload: garantiza que el servidor sirva el tema recién guardado
+        // sin riesgo de datos stale en el cache del cliente.
+        window.location.reload();
       } catch (e: any) {
         toast.error(e?.message ?? "Error al guardar el tema");
       }
