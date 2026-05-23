@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, useState, ReactNode } from "react";
 import { Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 
@@ -46,18 +46,20 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
   const [loading,     setLoading]     = useState(true);
   const [roleLoading, setRoleLoading] = useState(false);
 
+  // Evita volver a buscar el rol cuando Supabase dispara SIGNED_IN
+  // por cambio de pestaña, refresco de token, etc.
+  const roleFetched = useRef(false);
+
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        // Batch 1 (síncrono): libera el loading de sesión inmediatamente
         setSession(session);
         setLoading(false);
 
         if (session) {
-          // Solo busca el rol al inicio o al hacer sign-in.
-          // TOKEN_REFRESHED, USER_UPDATED, etc. solo actualizan la sesión
-          // sin causar el spinner de "CARGANDO" en el contenido.
-          if (event === "INITIAL_SESSION" || event === "SIGNED_IN") {
+          // Busca el rol solo si aún no lo tenemos para esta sesión
+          if (!roleFetched.current) {
+            roleFetched.current = true;
             setRoleLoading(true);
             try {
               const r = await fetchRole(session.user.id);
@@ -69,6 +71,8 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
             }
           }
         } else {
+          // Sign-out: resetea todo para la próxima sesión
+          roleFetched.current = false;
           setRole(null);
           setRoleLoading(false);
         }
