@@ -118,18 +118,18 @@ export default function InlineCellSelect({
         onClick={() => !disabled && setOpen((o) => !o)}
         onKeyDown={handleKeyDown}
         className="w-full flex items-center justify-between gap-1 px-1 py-0.5 rounded-sm
-          hover:bg-black/5 dark:hover:bg-white/5
-          focus:bg-white dark:focus:bg-neutral-800
-          focus:ring-1 focus:ring-violet-500/40
+          hover:bg-foreground/5
+          focus:bg-card
+          focus:ring-1 focus:ring-primary/40
           transition-all outline-none text-[12px]
-          text-neutral-600 dark:text-neutral-400 cursor-pointer"
+          text-muted-foreground cursor-pointer"
       >
         <span className="truncate min-w-0">
-          {selected?.label ?? <span className="text-neutral-400 italic">—</span>}
+          {selected?.label ?? <span className="text-muted-foreground/50 italic">—</span>}
         </span>
         <ChevronDown
           size={11}
-          className={`shrink-0 text-neutral-400 transition-transform duration-150 ${open ? "rotate-180" : ""}`}
+          className={`shrink-0 text-muted-foreground/50 transition-transform duration-150 ${open ? "rotate-180" : ""}`}
         />
       </button>
 
@@ -153,25 +153,25 @@ export default function InlineCellSelect({
                   ? { top    : rect.bottom + 2 }
                   : { bottom : window.innerHeight - rect.top + 2 }),
               }}
-              className="bg-white dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-lg shadow-xl overflow-hidden flex flex-col"
+              className="bg-popover border border-border rounded-lg shadow-xl overflow-hidden flex flex-col"
             >
               {/* Buscador */}
-              <div className="flex items-center gap-2 px-2.5 py-2 border-b border-neutral-100 dark:border-neutral-800 bg-neutral-50/60 dark:bg-neutral-900/60">
-                <Search size={11} className="text-neutral-400 shrink-0" />
+              <div className="flex items-center gap-2 px-2.5 py-2 border-b border-border bg-muted/40">
+                <Search size={11} className="text-muted-foreground/60 shrink-0" />
                 <input
                   autoFocus
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Buscar..."
                   className="flex-1 min-w-0 text-[12px] bg-transparent outline-none
-                    text-neutral-700 dark:text-neutral-300
-                    placeholder:text-neutral-400"
+                    text-foreground
+                    placeholder:text-muted-foreground/50"
                 />
                 {search && (
                   <button
                     type="button"
                     onClick={() => setSearch("")}
-                    className="text-neutral-400 hover:text-neutral-600 text-[10px] leading-none"
+                    className="text-muted-foreground/50 hover:text-foreground text-[10px] leading-none"
                   >
                     ✕
                   </button>
@@ -188,8 +188,8 @@ export default function InlineCellSelect({
                       onClick={() => handleSelect(opt.value)}
                       className={`w-full flex items-center justify-between px-2.5 py-1.5 text-[12px] rounded-md text-left transition-colors ${
                         opt.value === value
-                          ? "bg-violet-600 text-white"
-                          : "text-neutral-600 dark:text-neutral-300 hover:bg-violet-500/10 hover:text-violet-700 dark:hover:text-violet-300"
+                          ? "bg-primary text-primary-foreground"
+                          : "text-foreground hover:bg-primary/10 hover:text-primary"
                       }`}
                     >
                       <span className="truncate">{opt.label}</span>
@@ -197,7 +197,7 @@ export default function InlineCellSelect({
                     </button>
                   ))
                 ) : (
-                  <p className="px-3 py-4 text-center text-[11px] text-neutral-400">
+                  <p className="px-3 py-4 text-center text-[11px] text-muted-foreground/60">
                     Sin resultados
                   </p>
                 )}
@@ -205,7 +205,7 @@ export default function InlineCellSelect({
 
               {/* Contador cuando hay búsqueda activa */}
               {search && filtered.length > 0 && (
-                <div className="px-3 py-1.5 border-t border-neutral-100 dark:border-neutral-800 text-[10px] text-neutral-400 text-right">
+                <div className="px-3 py-1.5 border-t border-border text-[10px] text-muted-foreground/60 text-right">
                   {filtered.length} de {options.length}
                 </div>
               )}

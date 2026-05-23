@@ -5,7 +5,7 @@ import { useNotifications } from "@/hooks/useNotifications";
 import { Bell } from "lucide-react";
 import { NotificationItem } from "./NotificationItem";
 
-const ICON_BTN_CLASS = "group w-9 h-9 flex items-center justify-center rounded-sm transition-all text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/10";
+const ICON_BTN_CLASS = "group w-9 h-9 flex items-center justify-center rounded-sm transition-all text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground";
 
 export default function NotificationBell({ initialData }: { initialData: any[] }) {
   const { isOpen, setIsOpen, notifications, unreadCount, containerRef, deleteNotification, markAsRead, markAllAsRead } = useNotifications(initialData);
@@ -27,20 +27,20 @@ export default function NotificationBell({ initialData }: { initialData: any[] }
       </button>
 
       {isOpen && (
-        <div className="fixed inset-x-4 top-14 mt-2 md:absolute md:inset-auto md:right-0 md:top-full md:w-80 bg-white/40 dark:bg-black/40 backdrop-blur-xl border border-white/40 dark:border-white/10 rounded-sm shadow-2xl z-[100] animate-in fade-in slide-in-from-top-2 duration-200">
-          <div className="flex items-center justify-between p-3 border-b border-black/5 dark:border-white/5">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Notificaciones</span>
-            <button onClick={markAllAsRead} className="text-[10px] text-blue-600 font-bold hover:opacity-70">
+        <div className="fixed inset-x-4 top-14 mt-2 md:absolute md:inset-auto md:right-0 md:top-full md:w-80 bg-popover/90 backdrop-blur-xl border border-border rounded-sm shadow-2xl z-[100] animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="flex items-center justify-between p-3 border-b border-border">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Notificaciones</span>
+            <button onClick={markAllAsRead} className="text-[10px] text-primary font-bold hover:opacity-70">
               MARCAR TODO
             </button>
           </div>
 
           <div className="max-h-[60vh] md:max-h-[300px] overflow-y-auto">
-            {notifications.length > 0 ? notifications.map((n) => <NotificationItem key={n.id} n={n} onMarkRead={markAsRead} onDelete={deleteNotification} />) : <div className="py-10 text-center text-[11px] text-gray-500 uppercase font-bold opacity-40">Bandeja Vacía</div>}
+            {notifications.length > 0 ? notifications.map((n) => <NotificationItem key={n.id} n={n} onMarkRead={markAsRead} onDelete={deleteNotification} />) : <div className="py-10 text-center text-[11px] text-muted-foreground uppercase font-bold opacity-40">Bandeja Vacía</div>}
           </div>
 
-          <div className="p-2 border-t border-black/5 dark:border-white/5 text-center">
-            <button className="text-[10px] font-bold uppercase text-gray-400 hover:text-gray-900 dark:hover:text-white transition-all">Ver Historial Completo</button>
+          <div className="p-2 border-t border-border text-center">
+            <button className="text-[10px] font-bold uppercase text-muted-foreground hover:text-foreground transition-all">Ver Historial Completo</button>
           </div>
         </div>
       )}

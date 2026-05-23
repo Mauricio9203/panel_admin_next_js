@@ -173,7 +173,7 @@ const SearchableSelect = forwardRef<HTMLButtonElement, Props>(({ options, placeh
 
   return (
     <div className={`flex flex-col gap-1 w-full ${disabled ? "opacity-60" : ""}`} ref={containerRef} onKeyDown={handleKeyDown}>
-      {label && <span className={`font-bold text-slate-500 uppercase tracking-tight ml-1 ${sizeConfig[size].label}`}>{label}</span>}
+      {label && <span className={`font-bold text-muted-foreground uppercase tracking-tight ml-1 ${sizeConfig[size].label}`}>{label}</span>}
 
       <button
         {...props}
@@ -181,12 +181,12 @@ const SearchableSelect = forwardRef<HTMLButtonElement, Props>(({ options, placeh
         type="button"
         disabled={disabled}
         onClick={() => !disabled && setOpen(!open)}
-        className={`w-full flex items-center justify-between bg-white/60 dark:bg-slate-900/60 backdrop-blur-sm border transition-all ${error ? "border-rose-500/50" : "border-slate-200 dark:border-slate-800"} focus:ring-2 focus:ring-violet-500/40 outline-none ${sizeConfig[size].trigger}`}
+        className={`w-full flex items-center justify-between bg-background/60 backdrop-blur-sm border transition-all ${error ? "border-destructive/50" : "border-border"} focus:ring-2 focus:ring-primary/40 outline-none ${sizeConfig[size].trigger}`}
       >
         <div className="flex flex-wrap gap-1.5 flex-1 items-center min-w-0 text-left">
           {multiple && Array.isArray(currentValues) && currentValues.length > 0 ? (
             currentValues.map((v) => (
-              <span key={v} className={`bg-violet-600 text-white rounded-md flex items-center gap-1.5 ${sizeConfig[size].tag}`}>
+              <span key={v} className={`bg-primary text-primary-foreground rounded-md flex items-center gap-1.5 ${sizeConfig[size].tag}`}>
                 <span className="truncate max-w-[120px]">{options.find((o) => o.value === v)?.label}</span>
                 <X
                   className="w-3 h-3 cursor-pointer p-0.5"
@@ -198,13 +198,13 @@ const SearchableSelect = forwardRef<HTMLButtonElement, Props>(({ options, placeh
               </span>
             ))
           ) : (
-            <span className="truncate text-slate-700 dark:text-slate-200">{options.find((opt) => opt.value === currentValues)?.label || <span className="text-slate-400">{placeholder}</span>}</span>
+            <span className="truncate text-foreground">{options.find((opt) => opt.value === currentValues)?.label || <span className="text-muted-foreground/60">{placeholder}</span>}</span>
           )}
         </div>
 
         <div className="flex items-center gap-1 ml-2 shrink-0">
-          {hasValue && !disabled && <X onClick={handleClear} className={`${sizeConfig[size].icon} text-slate-400 hover:text-rose-500 transition-colors cursor-pointer mr-0.5`} />}
-          <ChevronDown className={`${sizeConfig[size].icon} text-slate-400 transition-transform ${open ? "rotate-180" : ""}`} />
+          {hasValue && !disabled && <X onClick={handleClear} className={`${sizeConfig[size].icon} text-muted-foreground/60 hover:text-destructive transition-colors cursor-pointer mr-0.5`} />}
+          <ChevronDown className={`${sizeConfig[size].icon} text-muted-foreground/60 transition-transform ${open ? "rotate-180" : ""}`} />
         </div>
       </button>
 
@@ -233,11 +233,11 @@ const SearchableSelect = forwardRef<HTMLButtonElement, Props>(({ options, placeh
                 bottom: direction === "up" ? window.innerHeight - coords.bottom + 4 : undefined,
                 zIndex: 9999,
               }}
-              className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg shadow-2xl overflow-hidden flex flex-col"
+              className="bg-popover border border-border rounded-lg shadow-2xl overflow-hidden flex flex-col"
             >
-              <div className="flex items-center px-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
-                <Search className="w-4 h-4 text-slate-400 mr-2" />
-                <input autoFocus className="w-full py-2 text-sm bg-transparent outline-none text-slate-700 dark:text-slate-200" placeholder="Filtrar..." value={search} onChange={(e) => setSearch(e.target.value)} />
+              <div className="flex items-center px-3 border-b border-border bg-muted/40">
+                <Search className="w-4 h-4 text-muted-foreground/60 mr-2" />
+                <input autoFocus className="w-full py-2 text-sm bg-transparent outline-none text-foreground placeholder:text-muted-foreground/50" placeholder="Filtrar..." value={search} onChange={(e) => setSearch(e.target.value)} />
               </div>
 
               <div ref={listRef} className="max-h-52 overflow-y-auto p-1 custom-scrollbar">
@@ -250,7 +250,7 @@ const SearchableSelect = forwardRef<HTMLButtonElement, Props>(({ options, placeh
                         key={opt.value}
                         onMouseEnter={() => setActiveIndex(i)}
                         onClick={() => toggleOption(opt.value)}
-                        className={`flex items-center justify-between px-3 py-2 text-sm rounded-md cursor-pointer ${isSelected ? "bg-violet-600 text-white" : isActive ? "bg-violet-500/10 text-violet-600" : "text-slate-600 dark:text-slate-300"}`}
+                        className={`flex items-center justify-between px-3 py-2 text-sm rounded-md cursor-pointer ${isSelected ? "bg-primary text-primary-foreground" : isActive ? "bg-primary/10 text-primary" : "text-foreground"}`}
                       >
                         <span className="truncate">{opt.label}</span>
                         {isSelected && <Check className="w-4 h-4" />}
@@ -258,7 +258,7 @@ const SearchableSelect = forwardRef<HTMLButtonElement, Props>(({ options, placeh
                     );
                   })
                 ) : (
-                  <div className="px-3 py-4 text-center text-xs text-slate-400">No hay resultados</div>
+                  <div className="px-3 py-4 text-center text-xs text-muted-foreground/60">No hay resultados</div>
                 )}
               </div>
             </motion.div>

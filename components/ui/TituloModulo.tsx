@@ -18,7 +18,7 @@ export default function TituloModulo({ titulo, variant = "default", icon: Icon =
           className={`
             flex items-center justify-center
             w-8 h-8 rounded-lg
-            ${isViolet ? "bg-violet-500/10 text-violet-600 dark:text-violet-300" : "bg-neutral-200 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300"}
+            ${isViolet ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}
           `}
         >
           <Icon size={16} />
@@ -26,10 +26,7 @@ export default function TituloModulo({ titulo, variant = "default", icon: Icon =
 
         {/* TITULO */}
         <h2
-          className={`
-            text-base font-semibold tracking-tight
-            ${isViolet ? "text-neutral-900 dark:text-white" : "text-neutral-900 dark:text-neutral-100"}
-          `}
+          className="text-base font-semibold tracking-tight text-foreground"
         >
           {titulo}
         </h2>
@@ -40,7 +37,7 @@ export default function TituloModulo({ titulo, variant = "default", icon: Icon =
         <div
           className={`
             h-px w-full
-            ${isViolet ? "bg-gradient-to-r from-violet-500 via-violet-500/30 to-transparent" : "bg-neutral-200 dark:bg-neutral-800"}
+            ${isViolet ? "bg-gradient-to-r from-primary via-primary/30 to-transparent" : "bg-border"}
           `}
         />
 
@@ -48,7 +45,7 @@ export default function TituloModulo({ titulo, variant = "default", icon: Icon =
         <div
           className={`
             absolute top-0 left-0 h-px w-16
-            ${isViolet ? "bg-violet-500" : "bg-neutral-400 dark:bg-neutral-500"}
+            ${isViolet ? "bg-primary" : "bg-muted-foreground/40"}
           `}
         />
       </div>

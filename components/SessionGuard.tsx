@@ -122,27 +122,27 @@ export default function SessionGuard({ children }: SessionGuardProps) {
         <div className="p-1 flex flex-col items-center">
           <div className="relative flex items-center justify-center w-24 h-24 mb-6">
             <svg className="absolute w-full h-full transform -rotate-90">
-              <circle cx="48" cy="48" r="44" stroke="currentColor" strokeWidth="4" fill="transparent" className="text-slate-200 dark:text-slate-800" />
-              <circle cx="48" cy="48" r="44" stroke="currentColor" strokeWidth="4" fill="transparent" strokeDasharray="276" strokeDashoffset={276 - (276 * countdown) / 60} className="text-violet-600 transition-all duration-1000 ease-linear" />
+              <circle cx="48" cy="48" r="44" stroke="currentColor" strokeWidth="4" fill="transparent" className="text-muted" />
+              <circle cx="48" cy="48" r="44" stroke="currentColor" strokeWidth="4" fill="transparent" strokeDasharray="276" strokeDashoffset={276 - (276 * countdown) / 60} className="text-primary transition-all duration-1000 ease-linear" />
             </svg>
-            <span className="text-3xl font-mono font-bold text-violet-600 dark:text-violet-400">{countdown}</span>
+            <span className="text-3xl font-mono font-bold text-primary">{countdown}</span>
           </div>
-          <p className="text-sm text-center text-slate-600 dark:text-slate-400">
+          <p className="text-sm text-center text-muted-foreground">
             Tu sesión se cerrará automáticamente en{" "}
-            <span className="font-bold text-slate-900 dark:text-white">{countdown} segundos</span>.
+            <span className="font-bold text-foreground">{countdown} segundos</span>.
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-3 mt-8 w-full">
             <button
               onClick={stayConnected}
               disabled={isLoggingOut}
-              className="w-full px-4 py-3 text-xs font-bold uppercase tracking-wider rounded-xl bg-violet-600 text-white hover:bg-violet-700 transition-all shadow-lg shadow-violet-600/20 active:scale-95"
+              className="w-full px-4 py-3 text-xs font-bold uppercase tracking-wider rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 active:scale-95"
             >
               Seguir trabajando
             </button>
             <button
               onClick={handleLogout}
               disabled={isLoggingOut}
-              className="w-full px-4 py-3 text-xs font-bold uppercase tracking-wider rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-red-50 dark:hover:bg-red-950/30 hover:text-red-600 transition-all active:scale-95"
+              className="w-full px-4 py-3 text-xs font-bold uppercase tracking-wider rounded-xl bg-muted text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all active:scale-95"
             >
               {isLoggingOut ? "Saliendo..." : "Salir ahora"}
             </button>

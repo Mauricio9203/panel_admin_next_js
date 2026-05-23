@@ -151,11 +151,11 @@ export function DataTable<TData>({
   const actions = bulkActions?.(selectedData) ?? [];
 
   return (
-    <div className="rounded-sm border border-violet-500/10 bg-white dark:bg-neutral-950 overflow-hidden flex flex-col max-h-[70vh] w-full max-w-full min-w-0 transition-colors">
+    <div className="rounded-sm border border-primary/10 bg-card overflow-hidden flex flex-col max-h-[70vh] w-full max-w-full min-w-0 transition-colors">
       {/* BARRA DE ACCIONES MASIVAS */}
       {hasSelection && (
-        <div className="flex items-center justify-between px-3 py-2 border-b border-violet-500/10 bg-violet-500/5 animate-in fade-in duration-200">
-          <span className="text-[11px] text-violet-700 dark:text-violet-300 font-medium">
+        <div className="flex items-center justify-between px-3 py-2 border-b border-primary/10 bg-primary/5 animate-in fade-in duration-200">
+          <span className="text-[11px] text-primary font-medium">
             {selectedData.length} seleccionados
           </span>
 
@@ -166,7 +166,7 @@ export function DataTable<TData>({
                 <button
                   key={i}
                   onClick={() => action.onClick(selectedData)}
-                  className={`px-3 py-1 text-[11px] rounded-md transition font-medium ${action.variant === "danger" ? "bg-red-600 text-white hover:bg-red-700" : action.variant === "outline" ? "bg-transparent text-violet-600 border border-violet-600 hover:bg-violet-100 dark:hover:bg-violet-800" : "bg-violet-600 text-white hover:bg-violet-700 shadow-sm"}`}
+                  className={`px-3 py-1 text-[11px] rounded-md transition font-medium ${action.variant === "danger" ? "bg-red-600 text-white hover:bg-red-700" : action.variant === "outline" ? "bg-transparent text-primary border border-primary hover:bg-primary/10" : "bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"}`}
                 >
                   {action.label}
                 </button>
@@ -190,7 +190,7 @@ export function DataTable<TData>({
             {/* Botón deseleccionar */}
             <button
               onClick={() => table.resetRowSelection()}
-              className="w-8 h-8 rounded-full flex items-center justify-center border border-neutral-300 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition text-neutral-500 text-[12px]"
+              className="w-8 h-8 rounded-full flex items-center justify-center border border-border hover:bg-muted transition text-muted-foreground text-[12px]"
             >
               ✕
             </button>

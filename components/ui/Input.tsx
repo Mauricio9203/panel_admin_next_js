@@ -31,12 +31,12 @@ const NormalInput = forwardRef<HTMLInputElement, InputProps>(({ label, icon: Ico
 
   return (
     <div className={`flex flex-col gap-1 w-full ${className}`}>
-      {label && <span className={`font-bold text-slate-500 uppercase tracking-tight ml-1 ${sizeConfig[size].label}`}>{label}</span>}
+      {label && <span className={`font-bold text-muted-foreground uppercase tracking-tight ml-1 ${sizeConfig[size].label}`}>{label}</span>}
 
       <div className="relative flex items-center">
         {Icon && (
           <div className="absolute left-3 flex items-center justify-center pointer-events-none z-10">
-            <Icon className={`${sizeConfig[size].icon} text-slate-400`} />
+            <Icon className={`${sizeConfig[size].icon} text-muted-foreground/60`} />
           </div>
         )}
 
@@ -45,13 +45,13 @@ const NormalInput = forwardRef<HTMLInputElement, InputProps>(({ label, icon: Ico
           type={inputType}
           ref={ref}
           className={`
-                w-full bg-white/60 dark:bg-slate-900/60 backdrop-blur-sm 
+                w-full bg-background/60 backdrop-blur-sm
                 border transition-all outline-none
-                placeholder:text-slate-400 text-slate-700 dark:text-slate-200
-                focus:ring-2 focus:ring-violet-500/40 
-                ${Icon ? "pl-9" : ""} 
+                placeholder:text-muted-foreground/50 text-foreground
+                focus:ring-2 focus:ring-primary/40
+                ${Icon ? "pl-9" : ""}
                 ${isPassword ? "pr-10" : ""}
-                ${error ? "border-rose-500/50 dark:border-rose-500/50 focus:border-rose-500" : "border-slate-200 dark:border-slate-800 focus:border-violet-500/50"}
+                ${error ? "border-destructive/50 focus:border-destructive" : "border-border focus:border-primary/50"}
                 ${sizeConfig[size].container}
                 
                 /* Estilos para Date e Time */
@@ -70,7 +70,7 @@ const NormalInput = forwardRef<HTMLInputElement, InputProps>(({ label, icon: Ico
         />
 
         {isPassword && (
-          <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 flex items-center justify-center text-slate-400 hover:text-violet-500 transition-colors z-10" tabIndex={-1}>
+          <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 flex items-center justify-center text-muted-foreground/60 hover:text-primary transition-colors z-10" tabIndex={-1}>
             {showPassword ? <EyeOff className={sizeConfig[size].icon} /> : <Eye className={sizeConfig[size].icon} />}
           </button>
         )}

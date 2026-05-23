@@ -9,7 +9,7 @@ import { MOCK_NOTIFICATIONS } from "@/constants/notification";
 
 const STORAGE_COLLAPSED = "sidebarCollapsed";
 
-const iconBtn = "group w-10 h-10 flex items-center justify-center rounded-xl transition-all transform hover:scale-[1.05] active:scale-[0.96] text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/10";
+const iconBtn = "group w-10 h-10 flex items-center justify-center rounded-xl transition-all transform hover:scale-[1.05] active:scale-[0.96] text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground";
 
 interface Props {
   collapsed: boolean;
@@ -62,15 +62,15 @@ export default function LayoutHeader({ collapsed, setCollapsed, setMobileOpen }:
   }, [localCollapsed, hydrated, setCollapsed]);
 
   if (!hydrated) {
-    return <header className="h-14 flex items-center justify-between px-4 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-black" />;
+    return <header className="h-14 flex items-center justify-between px-4 border-b border-sidebar-border bg-sidebar" />;
   }
 
   return (
-    <header className="h-14 flex items-center justify-between px-4 bg-white dark:bg-black border-b border-gray-200 dark:border-gray-800">
+    <header className="h-14 flex items-center justify-between px-4 bg-sidebar border-b border-sidebar-border">
       {/* LEFT */}
       <div className="flex items-center gap-2">
         <button onClick={() => setLocalCollapsed((v) => !v)} className={`hidden md:flex ${iconBtn}`}>
-          <Menu size={18} className={`transition-transform ${localCollapsed ? "rotate-180" : ""}`} />
+          <Menu size={18} className={`transition-transform duration-300 ${!localCollapsed ? "rotate-90" : ""}`} />
         </button>
 
         <button onClick={() => setMobileOpen(true)} className={`md:hidden ${iconBtn}`}>
@@ -84,7 +84,7 @@ export default function LayoutHeader({ collapsed, setCollapsed, setMobileOpen }:
         {/* BOTÓN NOTIFICACIONES */}
         <NotificationBell initialData={MOCK_NOTIFICATIONS} /> {/* <-- Componente limpio y aislado */}
         <ThemeButton />
-        <div className="h-6 w-[1px] bg-gray-200 dark:bg-gray-800 mx-1" />
+        <div className="h-6 w-[1px] bg-sidebar-border mx-1" />
         <button onClick={toggleFullscreen} className={iconBtn} title="Pantalla Completa">
           {isFullscreen ? <Minimize size={18} /> : <Maximize size={18} />}
         </button>

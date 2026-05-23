@@ -79,9 +79,9 @@ export default function Modal({ open, onClose, title, children, size = "md" }: M
             sm:max-h-[90vh] 
             
             /* Estilo Cristal y Borde Gris */
-            bg-white/80 dark:bg-slate-900/90 
-            backdrop-blur-xl 
-            border border-slate-300 dark:border-slate-700
+            bg-popover/90
+            backdrop-blur-xl
+            border border-border
             
             /* Redondeado sutil (Corregido de 2.5rem a 2xl) */
             rounded-2xl
@@ -92,13 +92,13 @@ export default function Modal({ open, onClose, title, children, size = "md" }: M
           >
             {/* Indicador visual móvil */}
             <div className="flex justify-center pt-4 sm:hidden shrink-0">
-              <div className="w-12 h-1.5 bg-slate-400/50 dark:bg-slate-500/50 rounded-full" />
+              <div className="w-12 h-1.5 bg-muted-foreground/30 rounded-full" />
             </div>
 
             {/* CABECERA */}
             <div className="px-6 py-4 sm:px-8 sm:py-5 flex justify-between items-center shrink-0">
-              {title ? <h2 className="text-xl font-bold text-slate-900 dark:text-white">{title}</h2> : <div />}
-              <button onClick={onClose} className="p-2 bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20 rounded-full transition-colors">
+              {title ? <h2 className="text-xl font-bold text-popover-foreground">{title}</h2> : <div />}
+              <button onClick={onClose} className="p-2 bg-foreground/5 hover:bg-foreground/10 rounded-full transition-colors">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12" />
                 </svg>
@@ -106,7 +106,7 @@ export default function Modal({ open, onClose, title, children, size = "md" }: M
             </div>
 
             {/* CUERPO */}
-            <div className="px-6 pb-8 sm:px-8 overflow-y-auto flex-1 min-h-0 text-slate-800 dark:text-slate-200">{children}</div>
+            <div className="px-6 pb-8 sm:px-8 overflow-y-auto flex-1 min-h-0 text-popover-foreground">{children}</div>
           </motion.div>
         </div>
       )}

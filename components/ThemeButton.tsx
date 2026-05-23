@@ -5,7 +5,7 @@ import { useTheme } from "next-themes";
 import { Sun, Moon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
-const iconBtn = "group w-10 h-10 flex items-center justify-center rounded-xl transition-all transform hover:scale-[1.05] active:scale-[0.96] text-violet-900 dark:text-violet-200 hover:bg-white/40 dark:hover:bg-white/10 overflow-hidden relative";
+const iconBtn = "group w-10 h-10 flex items-center justify-center rounded-xl transition-all transform hover:scale-[1.05] active:scale-[0.96] text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground overflow-hidden relative";
 
 export default function ThemeButton() {
   const { resolvedTheme, setTheme } = useTheme();

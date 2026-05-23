@@ -59,17 +59,17 @@ const columns: ColumnDef<UsuarioConRol>[] = [
               className="w-7 h-7 rounded-full object-cover shrink-0"
             />
           ) : (
-            <div className="w-7 h-7 rounded-full bg-violet-600 flex items-center justify-center shrink-0">
-              <span className="text-[9px] font-bold text-white">{initials}</span>
+            <div className="w-7 h-7 rounded-full bg-primary flex items-center justify-center shrink-0">
+              <span className="text-[9px] font-bold text-primary-foreground">{initials}</span>
             </div>
           )}
           <div className="flex flex-col leading-tight min-w-0">
             {full_name && (
-              <span className="text-[12px] font-medium text-neutral-700 dark:text-neutral-200 truncate">
+              <span className="text-[12px] font-medium text-foreground truncate">
                 {full_name}
               </span>
             )}
-            <span className="text-[11px] text-neutral-500 dark:text-neutral-400 truncate">
+            <span className="text-[11px] text-muted-foreground truncate">
               {email}
             </span>
           </div>
@@ -87,7 +87,7 @@ const columns: ColumnDef<UsuarioConRol>[] = [
     accessorKey: "created_at",
     header:      "Registrado",
     cell: ({ row }) => (
-      <span className="text-[11px] text-neutral-500">
+      <span className="text-[11px] text-muted-foreground">
         {fmtDate(row.getValue("created_at"))}
       </span>
     ),
@@ -96,7 +96,7 @@ const columns: ColumnDef<UsuarioConRol>[] = [
     accessorKey: "last_sign_in_at",
     header:      "Último acceso",
     cell: ({ row }) => (
-      <span className="text-[11px] text-neutral-500">
+      <span className="text-[11px] text-muted-foreground">
         {fmtDate(row.getValue("last_sign_in_at"))}
       </span>
     ),

@@ -26,12 +26,12 @@ const ACTION_STYLES: Record<string, string> = {
   eliminar_masivo:          "bg-red-100    text-red-700    dark:bg-red-900/30    dark:text-red-300",
   eliminar_usuario:         "bg-red-100    text-red-700    dark:bg-red-900/30    dark:text-red-300",
   eliminar_masivo_usuarios: "bg-red-100    text-red-700    dark:bg-red-900/30    dark:text-red-300",
-  cambiar_rol:              "bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300",
-  cambiar_rol_masivo:       "bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300",
+  cambiar_rol:              "bg-primary/10 text-primary",
+  cambiar_rol_masivo:       "bg-primary/10 text-primary",
   crear:                    "bg-green-100  text-green-700  dark:bg-green-900/30  dark:text-green-300",
 };
 
-const DEFAULT_BADGE = "bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400";
+const DEFAULT_BADGE = "bg-muted text-muted-foreground";
 
 /* ──────────────────────
    COLUMNAS
@@ -41,7 +41,7 @@ const columns: ColumnDef<AuditEntry>[] = [
     accessorKey: "created_at",
     header:      "Fecha",
     cell: ({ row }) => (
-      <span className="text-[11px] text-neutral-500 whitespace-nowrap">
+      <span className="text-[11px] text-muted-foreground whitespace-nowrap">
         {fmtDateTime(row.getValue("created_at"))}
       </span>
     ),
@@ -50,7 +50,7 @@ const columns: ColumnDef<AuditEntry>[] = [
     accessorKey: "user_email",
     header:      "Usuario",
     cell: ({ row }) => (
-      <span className="text-[12px] text-neutral-700 dark:text-neutral-300">
+      <span className="text-[12px] text-foreground">
         {row.getValue("user_email")}
       </span>
     ),
@@ -71,7 +71,7 @@ const columns: ColumnDef<AuditEntry>[] = [
     accessorKey: "entity",
     header:      "Módulo",
     cell: ({ row }) => (
-      <span className="text-[11px] text-neutral-500 font-mono">
+      <span className="text-[11px] text-muted-foreground font-mono">
         {row.getValue("entity")}
       </span>
     ),
@@ -80,7 +80,7 @@ const columns: ColumnDef<AuditEntry>[] = [
     accessorKey: "detail",
     header:      "Detalle",
     cell: ({ row }) => (
-      <span className="text-[12px] text-neutral-600 dark:text-neutral-400">
+      <span className="text-[12px] text-muted-foreground">
         {row.getValue("detail") ?? "—"}
       </span>
     ),

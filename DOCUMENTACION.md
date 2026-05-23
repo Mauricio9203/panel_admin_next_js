@@ -24,6 +24,16 @@
 11. [Log de auditoría](#11-log-de-auditoría)
 12. [Gestión de usuarios](#12-gestión-de-usuarios)
 13. [Referencia rápida de hooks](#13-referencia-rápida-de-hooks)
+14. [Sistema de temas (Apariencia)](#14-sistema-de-temas-apariencia)
+    - 14.1 Arquitectura
+    - 14.2 Tabla `theme_config` en Supabase
+    - 14.3 Tipos TypeScript (`config/theme.ts`)
+    - 14.4 Presets (`config/themePresets.ts`)
+    - 14.5 Inyección de variables CSS (`ThemeVars`)
+    - 14.6 Carga desde base de datos (`lib/themeLoader.ts`)
+    - 14.7 Módulo de Apariencia (`/configuracion/apariencia`)
+    - 14.8 Cómo crear un preset personalizado
+    - 14.9 Cómo usar los colores del tema en componentes
 
 ---
 
@@ -35,7 +45,7 @@
 | React | 19+ | UI |
 | TypeScript | 5+ | Tipado |
 | Supabase | 2+ | Base de datos + Auth |
-| Tailwind CSS | 3+ | Estilos |
+| Tailwind CSS | 4+ | Estilos (OKLCH, `@theme inline`) |
 | TanStack Table | 8+ | Tablas |
 | Framer Motion | 11+ | Animaciones |
 | Sonner | — | Toasts |
@@ -149,6 +159,25 @@ INSERT INTO public.productos (nombre, precio, categoria, stock) VALUES
   ('Monitor 4K',      499.99, 'Electrónica',   8),
   ('Auriculares BT',   79.99, 'Audio',         60);
 ```
+
+---
+
+#### Tabla `theme_config`
+
+Almacena la configuración visual del panel (colores, radios de borde). Solo existe **una fila** con `id = 1`.
+
+```sql
+CREATE TABLE public.theme_config (
+  id     int   PRIMARY KEY DEFAULT 1,
+  theme  jsonb NOT NULL DEFAULT '{}'::jsonb,
+  CHECK (id = 1)       -- garantiza que siempre haya una sola fila
+);
+
+-- Insertar la fila inicial (vacía — el panel usará DEFAULT_THEME)
+INSERT INTO public.theme_config (id, theme) VALUES (1, '{}'::jsonb);
+```
+
+> Si la tabla está vacía o el registro no existe, `lib/themeLoader.ts` devuelve automáticamente `DEFAULT_THEME` (el tema Morado definido en `config/theme.ts`).
 
 ---
 
@@ -363,12 +392,17 @@ panel_admin_next_js/
 ├── app/
 │   ├── (admin)/                    # Rutas protegidas del panel
 │   │   ├── layout.tsx              # Layout con sidebar y header
+│   │   ├── loading.tsx             # Skeleton global del área admin
 │   │   ├── error.tsx               # Error boundary del área admin
 │   │   ├── not-found.tsx           # 404 dentro del área admin
 │   │   ├── dashboard/
 │   │   ├── usuarios/               # Módulo de gestión de usuarios
 │   │   ├── auditoria/              # Log de auditoría
-│   │   └── tablas/                 # Módulos de ejemplo con DataTable
+│   │   └── configuracion/
+│   │       └── apariencia/         # Módulo de personalización visual
+│   │           ├── page.tsx        # Server Component (carga tema desde DB)
+│   │           ├── AparienciaClient.tsx  # Editor visual de tema
+│   │           └── actions.ts      # Server Action: saveTheme
 │   │
 │   ├── (auth)/                     # Rutas públicas de autenticación
 │   │   └── login/
@@ -379,8 +413,8 @@ panel_admin_next_js/
 │   │   └── update-password/        # Página de nueva contraseña (reset)
 │   │
 │   ├── api/                        # API Routes de Next.js (si las necesitas)
-│   ├── globals.css
-│   ├── layout.tsx                  # Root layout (providers globales)
+│   ├── globals.css                 # Variables CSS base + scrollbar + @theme inline
+│   ├── layout.tsx                  # Root layout — inyecta <ThemeVars />
 │   ├── not-found.tsx               # 404 global (sin sidebar)
 │   └── page.tsx                    # Redirige a /dashboard o /login
 │
@@ -389,7 +423,12 @@ panel_admin_next_js/
 │   ├── SessionGuard.tsx            # Protección de rutas + inactividad
 │   ├── Sidebar.tsx                 # Navegación lateral
 │   ├── LayoutHeader.tsx            # Header superior
+│   ├── ThemeVars.tsx               # Inyecta CSS custom properties del tema activo
+│   ├── ThemeButton.tsx             # Botón de toggle dark/light en el header
 │   ├── ToasterProvider.tsx         # Proveedor de toasts (Sonner)
+│   ├── notifications/
+│   │   ├── NotificationBell.tsx    # Campana de notificaciones
+│   │   └── NotificationItem.tsx    # Item individual de notificación
 │   └── ui/
 │       ├── DataTable.tsx           # Componente principal de tabla
 │       ├── DataTable/
@@ -400,30 +439,35 @@ panel_admin_next_js/
 │       │   ├── DataTableToolbar.tsx
 │       │   ├── DataTableRowActions.tsx
 │       │   ├── DataTablePortal.tsx
-│       │   ├── InlineCellSelect.tsx # Select con búsqueda para celdas
+│       │   ├── InlineCellSelect.tsx # Select con búsqueda para celdas (portal)
+│       │   ├── PageSizeSelector.tsx # Selector de filas por página
 │       │   └── useDataTable.tsx
 │       ├── Button.tsx
 │       ├── Input.tsx
 │       ├── Modal.tsx
 │       ├── SearchableSelect.tsx    # Select con búsqueda (para formularios)
+│       ├── TituloModulo.tsx        # Encabezado visual de cada módulo
 │       └── ...
 │
 ├── config/
 │   ├── sidebarMenu.jsx             # Definición del menú lateral
-│   └── permissions.ts             # Mapa de permisos por rol
+│   ├── permissions.ts              # Mapa de permisos por rol
+│   ├── theme.ts                    # Tipos PanelTheme / ThemeScale + DEFAULT_THEME
+│   └── themePresets.ts             # Presets de color (Morado, Azul, Verde, etc.)
 │
 ├── hooks/
-│   ├── useAuditLog.ts             # Hook para registrar acciones
-│   ├── usePermission.ts           # Hook para verificar permisos
-│   ├── useSupabaseTable.ts        # Hook CRUD para tablas Supabase
-│   ├── useServerTable.ts          # Hook para tablas server-side
-│   └── useIdleTimer.ts            # Timer de inactividad
+│   ├── useAuditLog.ts              # Hook para registrar acciones
+│   ├── usePermission.ts            # Hook para verificar permisos
+│   ├── useSupabaseTable.ts         # Hook CRUD para tablas Supabase
+│   ├── useServerTable.ts           # Hook para tablas server-side
+│   └── useIdleTimer.ts             # Timer de inactividad
 │
 ├── lib/
-│   ├── supabase.ts                # Cliente Supabase (browser)
-│   └── supabaseAdmin.ts           # Cliente Supabase (server, service role)
+│   ├── supabase.ts                 # Cliente Supabase (browser)
+│   ├── supabaseAdmin.ts            # Cliente Supabase (server, service role)
+│   └── themeLoader.ts              # Carga el tema desde DB con caché de Next.js
 │
-└── .env.local                     # Variables de entorno (no commitear)
+└── .env.local                      # Variables de entorno (no commitear)
 ```
 
 ---
@@ -980,10 +1024,10 @@ export default async function ClientesPage() {
   return (
     <div className="flex flex-col gap-6 p-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">
+        <h1 className="text-2xl font-bold text-foreground">
           Clientes
         </h1>
-        <p className="text-sm text-slate-500 mt-1">
+        <p className="text-sm text-muted-foreground mt-1">
           Gestión de clientes de la plataforma
         </p>
       </div>
@@ -1288,22 +1332,426 @@ const { data, loading, ...tableProps } = useServerTable({
 
 ---
 
+## 14. Sistema de temas (Apariencia)
+
+El panel incluye un sistema completo de personalización visual que permite cambiar colores, radios de borde y apariencia de toda la UI sin tocar código. Los cambios se guardan en Supabase y se aplican en tiempo real con preview instantánea.
+
+---
+
+### 14.1 Arquitectura
+
+```
+globals.css (@theme inline)        ← Variables CSS base (fallback)
+     ↕
+config/theme.ts (DEFAULT_THEME)    ← Tema por defecto (TypeScript)
+     ↕
+config/themePresets.ts             ← Colección de presets de color
+     ↕
+lib/themeLoader.ts                 ← Lee theme_config desde Supabase (con caché)
+     ↕
+components/ThemeVars.tsx           ← Server Component: inyecta <style> con variables
+     ↕
+app/layout.tsx                     ← Usa <ThemeVars theme={theme} />
+     ↕
+Todos los componentes              ← Consumen las variables via Tailwind
+```
+
+**Flujo de carga:**
+1. En cada request, `app/layout.tsx` llama a `loadTheme()`.
+2. `loadTheme()` usa `unstable_cache` de Next.js con tag `"panel-theme"` — solo hace una consulta real a Supabase y cachea el resultado.
+3. `ThemeVars` inyecta las variables como un bloque `<style>` en el `<head>` con las reglas `:root` (light) y `.dark` (dark).
+4. Tailwind 4 mapea estas variables CSS a clases utilitarias via `@theme inline` en `globals.css`.
+
+**Flujo de guardado:**
+1. El usuario edita el tema en `/configuracion/apariencia`.
+2. Al hacer clic en "Guardar", se llama al Server Action `saveTheme(theme)`.
+3. El action hace un `upsert` en `theme_config` e invalida la caché con `revalidateTag("panel-theme")`.
+4. En el próximo request, `loadTheme()` re-consulta la DB con el tema nuevo.
+
+---
+
+### 14.2 Tabla `theme_config` en Supabase
+
+Si aún no la has creado, ejecuta en el SQL Editor:
+
+```sql
+CREATE TABLE public.theme_config (
+  id     int   PRIMARY KEY DEFAULT 1,
+  theme  jsonb NOT NULL DEFAULT '{}'::jsonb,
+  CHECK (id = 1)
+);
+
+INSERT INTO public.theme_config (id, theme) VALUES (1, '{}'::jsonb);
+```
+
+> No se necesitan políticas RLS para esta tabla porque se accede exclusivamente desde el servidor con `supabaseAdmin` (service role key).
+
+---
+
+### 14.3 Tipos TypeScript (`config/theme.ts`)
+
+```ts
+// config/theme.ts
+
+/** Variables de color para un modo (light o dark). */
+export type ThemeScale = {
+  primary:                  string;  // Color de marca principal
+  primaryForeground:        string;
+  background:               string;
+  foreground:               string;
+  card:                     string;
+  cardForeground:           string;
+  popover:                  string;
+  popoverForeground:        string;
+  secondary:                string;
+  secondaryForeground:      string;
+  muted:                    string;
+  mutedForeground:          string;
+  accent:                   string;
+  accentForeground:         string;
+  destructive:              string;
+  border:                   string;
+  input:                    string;
+  ring:                     string;
+  sidebar:                  string;
+  sidebarForeground:        string;
+  sidebarPrimary:           string;
+  sidebarPrimaryForeground: string;
+  sidebarAccent:            string;
+  sidebarAccentForeground:  string;
+  sidebarBorder:            string;
+  sidebarRing:              string;
+  scrollbarBg:              string;
+  scrollbarThumb:           string;
+  scrollbarThumbHover:      string;
+};
+
+export type PanelTheme = {
+  light:  ThemeScale;
+  dark:   ThemeScale;
+  /** Radio de bordes base (ej: "1.5rem"). El resto se calcula proporcional. */
+  radius: string;
+};
+
+/** Tema por defecto (Morado). Se usa cuando no hay tema guardado en DB. */
+export const DEFAULT_THEME: PanelTheme = { ... };
+```
+
+Los valores usan el espacio de color **OKLCH** (el mismo que Tailwind v4). Para convertir hex a OKLCH: [oklch.com](https://oklch.com).
+
+---
+
+### 14.4 Presets (`config/themePresets.ts`)
+
+Un preset es un objeto con metadatos visuales + un `PanelTheme` completo:
+
+```ts
+// config/themePresets.ts
+
+export type ThemePreset = {
+  id:          string;           // identificador único ("morado", "azul", etc.)
+  name:        string;           // nombre visible en la UI
+  description: string;
+  preview: {
+    primary:      string;        // hex para el chip de preview (light)
+    primaryDark:  string;        // hex para el chip de preview (dark)
+    sidebarLight: string;
+    sidebarDark:  string;
+  };
+  theme: PanelTheme;             // configuración completa de colores
+};
+```
+
+Los presets disponibles se exportan como `THEME_PRESETS: ThemePreset[]`.
+
+---
+
+### 14.5 Inyección de variables CSS (`ThemeVars`)
+
+`components/ThemeVars.tsx` es un **Server Component** que recibe un `PanelTheme` y renderiza un bloque `<style>` con todas las CSS custom properties:
+
+```tsx
+// components/ThemeVars.tsx — uso en layout
+import ThemeVars from "@/components/ThemeVars";
+import { loadTheme } from "@/lib/themeLoader";
+
+export default async function RootLayout({ children }) {
+  const theme = await loadTheme();
+  return (
+    <html>
+      <head>
+        <ThemeVars theme={theme} />
+      </head>
+      <body>{children}</body>
+    </html>
+  );
+}
+```
+
+El componente genera internamente:
+
+```html
+<style>
+  :root {
+    --background: oklch(1 0 0);
+    --primary: oklch(0.55 0.28 295);
+    --radius: 1.5rem;
+    /* ...todas las variables del modo light... */
+  }
+  .dark {
+    --background: oklch(0.12 0.025 295);
+    --primary: oklch(0.72 0.22 295);
+    /* ...todas las variables del modo dark... */
+  }
+</style>
+```
+
+---
+
+### 14.6 Carga desde base de datos (`lib/themeLoader.ts`)
+
+```ts
+// lib/themeLoader.ts
+import { unstable_cache } from "next/cache";
+import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { DEFAULT_THEME, PanelTheme } from "@/config/theme";
+
+export const loadTheme = unstable_cache(
+  async (): Promise<PanelTheme> => {
+    const { data } = await supabaseAdmin
+      .from("theme_config")
+      .select("theme")
+      .eq("id", 1)
+      .single();
+
+    if (!data?.theme || Object.keys(data.theme).length === 0) {
+      return DEFAULT_THEME;
+    }
+    return data.theme as PanelTheme;
+  },
+  ["panel-theme"],
+  { tags: ["panel-theme"] }
+);
+```
+
+> La caché se invalida automáticamente cuando `saveTheme` llama a `revalidateTag("panel-theme")`.
+
+---
+
+### 14.7 Módulo de Apariencia (`/configuracion/apariencia`)
+
+#### Server Component (`page.tsx`)
+
+Carga el tema actual desde la DB y lo pasa al editor client-side:
+
+```tsx
+// app/(admin)/configuracion/apariencia/page.tsx
+import { loadTheme } from "@/lib/themeLoader";
+import AparienciaClient from "./AparienciaClient";
+
+export default async function AparienciaPage() {
+  const currentTheme = await loadTheme();
+  return <AparienciaClient currentTheme={currentTheme} />;
+}
+```
+
+#### Server Action (`actions.ts`)
+
+```ts
+// app/(admin)/configuracion/apariencia/actions.ts
+"use server";
+
+import { revalidateTag } from "next/cache";
+import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { PanelTheme } from "@/config/theme";
+
+export async function saveTheme(theme: PanelTheme) {
+  const { error } = await supabaseAdmin
+    .from("theme_config")
+    .upsert({ id: 1, theme }, { onConflict: "id" });
+
+  if (error) throw new Error("Error al guardar el tema");
+
+  revalidateTag("panel-theme"); // invalida la caché → próximo request recarga el tema
+}
+```
+
+#### Preview en tiempo real (`applyThemePreview`)
+
+El editor llama a `applyThemePreview(theme, mode)` para ver los cambios al instante **sin guardar**. Esta función inyecta dinámicamente un `<style id="theme-preview">` con las variables del tema seleccionado en `:root` o `.dark`, sobreescribiendo temporalmente las variables base.
+
+```ts
+// Ejemplo de uso en AparienciaClient.tsx
+import { applyThemePreview } from "@/lib/applyThemePreview"; // o definida inline
+
+const handlePreviewPreset = (preset: ThemePreset) => {
+  setSelected(preset);
+  applyThemePreview(preset.theme, isDark ? "dark" : "light");
+};
+```
+
+---
+
+### 14.8 Cómo crear un preset personalizado
+
+1. Abre `config/themePresets.ts`.
+
+2. Agrega un nuevo objeto al array `THEME_PRESETS`:
+
+```ts
+{
+  id:          "esmeralda",
+  name:        "Esmeralda",
+  description: "Verde fresco y natural",
+  preview: {
+    primary:      "#10b981",   // hex aproximado para el chip
+    primaryDark:  "#34d399",
+    sidebarLight: "#f0fdf4",
+    sidebarDark:  "#0a1f0f",
+  },
+  theme: {
+    radius: "1rem",
+    light: {
+      ...NEUTRAL_LIGHT,                              // base neutral reutilizable
+      primary:                  "oklch(0.65 0.19 160)",
+      primaryForeground:        "oklch(0.985 0 0)",
+      secondary:                "oklch(0.96 0.02 160)",
+      secondaryForeground:      "oklch(0.2 0.05 160)",
+      accent:                   "oklch(0.92 0.06 160)",
+      accentForeground:         "oklch(0.2 0 0)",
+      ring:                     "oklch(0.65 0.19 160 / 40%)",
+      sidebar:                  "oklch(0.97 0 0)",
+      sidebarPrimary:           "oklch(0.65 0.19 160)",
+      sidebarPrimaryForeground: "oklch(0.985 0 0)",
+      sidebarAccent:            "oklch(0.95 0.02 160)",
+      scrollbarBg:              "#f0fdf4",
+      scrollbarThumb:           "#10b981",
+      scrollbarThumbHover:      "#059669",
+    },
+    dark: {
+      ...NEUTRAL_DARK,
+      primary:                  "oklch(0.75 0.18 160)",
+      primaryForeground:        "oklch(0.1 0 0)",
+      background:               "oklch(0.11 0.02 160)",
+      card:                     "oklch(0.17 0.03 160 / 80%)",
+      popover:                  "oklch(0.17 0.03 160 / 90%)",
+      secondary:                "oklch(0.24 0.05 160)",
+      secondaryForeground:      "oklch(0.985 0 0)",
+      muted:                    "oklch(0.24 0.02 160)",
+      accent:                   "oklch(0.29 0.08 160)",
+      accentForeground:         "oklch(0.985 0 0)",
+      ring:                     "oklch(0.75 0.18 160 / 50%)",
+      sidebar:                  "oklch(0.14 0.02 160)",
+      sidebarPrimary:           "oklch(0.65 0.19 160)",
+      sidebarPrimaryForeground: "oklch(0.985 0 0)",
+      sidebarAccent:            "oklch(0.24 0.05 160)",
+      sidebarRing:              "oklch(0.75 0.18 160)",
+      scrollbarBg:              "#0a1f0f",
+      scrollbarThumb:           "#34d399",
+      scrollbarThumbHover:      "#6ee7b7",
+    },
+  },
+},
+```
+
+3. El preset aparece automáticamente en `/configuracion/apariencia`.
+
+> **Referencia de hue OKLCH:**  
+> `0` = rojo · `60` = amarillo · `120` = verde-amarillo · `160` = verde · `200` = cian · `240` = azul · `270` = violeta · `295` = morado · `320` = fucsia · `360` = rojo
+
+---
+
+### 14.9 Cómo usar los colores del tema en componentes
+
+Todos los componentes deben usar clases Tailwind basadas en CSS variables, **nunca colores hardcoded** como `text-slate-800` o `bg-violet-600`. Esto garantiza que el tema funcione correctamente.
+
+#### Referencia de clases por intención
+
+| Intención | Clase Tailwind |
+|---|---|
+| Texto principal | `text-foreground` |
+| Texto secundario / ayuda | `text-muted-foreground` |
+| Texto con opacidad | `text-muted-foreground/60` |
+| Fondo de página | `bg-background` |
+| Fondo de tarjetas | `bg-card` |
+| Fondo de popovers/dropdowns | `bg-popover` |
+| Fondo de secciones apagadas | `bg-muted` |
+| Color primario (botones, badges) | `bg-primary text-primary-foreground` |
+| Color primario suave (hover, selección) | `bg-primary/10 text-primary` |
+| Borde estándar | `border-border` |
+| Input (borde) | `border-border focus:border-primary/50` |
+| Ring de foco | `focus:ring-2 focus:ring-primary/40` |
+| Destructivo / peligro | `text-destructive` / `bg-destructive/10 text-destructive/60` |
+| Sidebar fondo | `bg-sidebar` |
+| Sidebar texto | `text-sidebar-foreground` |
+| Sidebar hover | `hover:bg-sidebar-accent hover:text-sidebar-accent-foreground` |
+
+#### Ejemplo: título de módulo
+
+```tsx
+// ✅ Correcto — responde al tema
+<h1 className="text-2xl font-bold text-foreground">Mis datos</h1>
+<p className="text-sm text-muted-foreground mt-1">Descripción del módulo</p>
+
+// ❌ Incorrecto — hardcoded, no cambia con el tema
+<h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Mis datos</h1>
+```
+
+#### Ejemplo: botón primario
+
+```tsx
+// ✅ Correcto
+<button className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl px-4 py-2">
+  Guardar
+</button>
+
+// ❌ Incorrecto
+<button className="bg-violet-600 text-white hover:bg-violet-700 rounded-xl px-4 py-2">
+  Guardar
+</button>
+```
+
+#### Ejemplo: badge de estado
+
+```tsx
+// ✅ Correcto
+<span className="bg-primary/10 text-primary text-xs font-semibold px-2 py-0.5 rounded-full">
+  Activo
+</span>
+```
+
+---
+
 ## Checklist de puesta en marcha
 
+**Base de datos y autenticación**
 - [ ] Proyecto Supabase creado
 - [ ] Tabla `profiles` creada con SQL
 - [ ] Tabla `audit_log` creada con SQL
-- [ ] RLS activado y políticas aplicadas
+- [ ] Tabla `theme_config` creada con SQL (fila inicial insertada)
+- [ ] RLS activado y políticas aplicadas en `profiles` y `audit_log`
 - [ ] Trigger de auto-registro creado (dos bloques separados)
 - [ ] Google OAuth configurado en Google Cloud Console
 - [ ] Google OAuth habilitado en Supabase → Authentication → Providers
 - [ ] URL de redirección configurada en Supabase (`http://localhost:3000/**`)
-- [ ] Archivo `.env.local` creado con las tres variables
+
+**Entorno y arranque**
+- [ ] Archivo `.env.local` creado con las tres variables (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`)
 - [ ] `npm install` ejecutado
 - [ ] `npm run dev` corriendo sin errores
+
+**Verificación funcional**
 - [ ] Login con Google funciona
 - [ ] Login con email/password funciona
 - [ ] Al registrarse, el usuario aparece en `profiles` con rol `viewer`
+- [ ] Redirige al login si se accede sin sesión
+
+**Sistema de temas**
+- [ ] Tabla `theme_config` tiene la fila inicial (`id = 1`)
+- [ ] `/configuracion/apariencia` carga y muestra los presets correctamente
+- [ ] Seleccionar un preset cambia el preview en tiempo real
+- [ ] "Guardar tema" persiste los cambios en Supabase
+- [ ] Al recargar, el tema guardado se aplica correctamente
 
 ---
 

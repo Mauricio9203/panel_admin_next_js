@@ -9,7 +9,7 @@ import Modal from "./ui/Modal";
 /* =========================
     STYLES
 ========================= */
-const iconBtn = "w-10 h-10 flex items-center justify-center rounded-xl transition-all hover:scale-[1.05] active:scale-[0.96] text-violet-900 dark:text-violet-200 hover:bg-white/40 dark:hover:bg-white/10";
+const iconBtn = "w-10 h-10 flex items-center justify-center rounded-xl transition-all hover:scale-[1.05] active:scale-[0.96] text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground";
 
 /* =========================
     ITEM COMPONENT
@@ -20,8 +20,8 @@ function DropdownItem({ label, danger, onClick, disabled }: { label: string; dan
       onClick={onClick}
       disabled={disabled}
       className={`w-full text-left px-3 py-2 text-sm transition-colors
-      hover:bg-black/5 dark:hover:bg-white/10 disabled:opacity-50
-      ${danger ? "text-red-500" : "text-violet-900 dark:text-violet-200"}`}
+      hover:bg-accent hover:text-accent-foreground disabled:opacity-50
+      ${danger ? "text-destructive" : "text-popover-foreground"}`}
     >
       {label}
     </button>
@@ -125,8 +125,8 @@ export default function UserMenu() {
             }}
             className="
               rounded-sm
-              bg-white dark:bg-slate-900
-              border border-black/5 dark:border-white/10
+              bg-popover
+              border border-border
               shadow-lg shadow-black/5 dark:shadow-black/40
               overflow-hidden
               origin-top-right
@@ -136,7 +136,7 @@ export default function UserMenu() {
             <DropdownItem label="Perfil" onClick={() => setOpen(false)} />
             <DropdownItem label="Configuración" onClick={() => setOpen(false)} />
 
-            <div className="h-px bg-black/5 dark:bg-white/10 my-1" />
+            <div className="h-px bg-border my-1" />
 
             <DropdownItem
               label="Cerrar sesión"
@@ -153,10 +153,10 @@ export default function UserMenu() {
       {/* CONFIRMATION MODAL */}
       <Modal open={logoutOpen} onClose={() => !isLoggingOut && setLogoutOpen(false)} title="Confirmación">
         <div className="p-1">
-          <p className="text-sm text-slate-600 dark:text-slate-400">¿Estás seguro de que deseas finalizar tu sesión actual?</p>
+          <p className="text-sm text-muted-foreground">¿Estás seguro de que deseas finalizar tu sesión actual?</p>
 
           <div className="flex justify-end gap-3 mt-6">
-            <button onClick={() => setLogoutOpen(false)} disabled={isLoggingOut} className="px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-sm bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+            <button onClick={() => setLogoutOpen(false)} disabled={isLoggingOut} className="px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-sm bg-muted hover:bg-muted/80 transition-colors text-foreground">
               Cancelar
             </button>
 

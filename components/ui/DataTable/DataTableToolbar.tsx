@@ -201,21 +201,21 @@ export default function DataTableToolbar<TData>({ actions, table, fetchAllRows, 
       label: FORMAT_CONFIG[fmt].label,
       Icon:  FORMAT_CONFIG[fmt].Icon,
       onClick: () => handleExport(fmt),
-      color: "bg-neutral-700 dark:bg-neutral-600",
+      color: "bg-muted-foreground/70",
     })),
     ...customActions.map((a, i) => ({
       key:   `custom-${i}`,
       label: a.label,
       Icon:  (a.icon ?? Plus) as React.ComponentType<{ size?: number }>,
       onClick: () => { setFabOpen(false); a.onClick(); },
-      color: a.variant === "danger" ? "bg-red-500" : "bg-violet-600",
+      color: a.variant === "danger" ? "bg-red-500" : "bg-primary",
     })),
   ];
 
   return (
     <>
       {/* ── DESKTOP TOOLBAR ── */}
-      <div className="hidden md:flex items-center justify-end gap-2 px-3 py-2 border-b border-violet-500/10">
+      <div className="hidden md:flex items-center justify-end gap-2 px-3 py-2 border-b border-primary/10">
         {exportAction && (
           <div ref={exportRef} className="relative">
             <Button variant="outline" size="sm" onClick={() => setExportOpen((o) => !o)} className="gap-1.5 text-[11px]">
@@ -224,11 +224,11 @@ export default function DataTableToolbar<TData>({ actions, table, fetchAllRows, 
               <ChevronDown size={11} className={`transition-transform duration-150 ${exportOpen ? "rotate-180" : ""}`} />
             </Button>
             {exportOpen && (
-              <div className="absolute right-0 mt-1 w-44 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-md shadow-xl z-[200] py-1 animate-in fade-in duration-100">
+              <div className="absolute right-0 mt-1 w-44 bg-popover border border-border rounded-md shadow-xl z-[200] py-1 animate-in fade-in duration-100">
                 {exportAction.formats.map((fmt) => {
                   const { label, Icon } = FORMAT_CONFIG[fmt];
                   return (
-                    <button key={fmt} onClick={() => handleExport(fmt)} className="w-full text-left px-3 py-2 text-[12px] flex items-center gap-2 hover:bg-violet-500/5 dark:hover:bg-violet-500/10 transition-colors text-neutral-700 dark:text-neutral-300">
+                    <button key={fmt} onClick={() => handleExport(fmt)} className="w-full text-left px-3 py-2 text-[12px] flex items-center gap-2 hover:bg-primary/8 transition-colors text-popover-foreground">
                       <Icon size={13} className="opacity-60" />
                       {label}
                     </button>
@@ -273,7 +273,7 @@ export default function DataTableToolbar<TData>({ actions, table, fetchAllRows, 
                 transition={{ duration: 0.18, delay: i * 0.05 }}
                 className="flex items-center gap-3"
               >
-                <span className="bg-white dark:bg-neutral-800 text-neutral-800 dark:text-neutral-100 text-[12px] font-medium px-3 py-1.5 rounded-lg shadow-lg whitespace-nowrap">
+                <span className="bg-card text-card-foreground text-[12px] font-medium px-3 py-1.5 rounded-lg shadow-lg whitespace-nowrap">
                   {item.label}
                 </span>
                 <button
@@ -288,7 +288,7 @@ export default function DataTableToolbar<TData>({ actions, table, fetchAllRows, 
 
           <motion.button
             onClick={() => setFabOpen((o) => !o)}
-            className="w-14 h-14 rounded-full bg-violet-600 text-white flex items-center justify-center shadow-xl active:scale-95"
+            className="w-14 h-14 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-xl active:scale-95"
             animate={{ rotate: fabOpen ? 45 : 0 }}
             transition={{ duration: 0.2 }}
           >
