@@ -179,13 +179,13 @@ export default function LoginPage() {
         </Button>
       </div>
 
-      <div className="w-full max-w-[420px] flex flex-col items-center justify-center z-50 px-6">
+      <div className="w-full max-w-[400px] flex flex-col items-center justify-center z-50 px-6">
         {/* LOGO */}
-        <div className="flex flex-col items-center mb-[5vh] shrink-0">
-          <motion.div whileHover={{ scale: 1.05 }} className="w-16 h-16 rounded-2xl border flex items-center justify-center mb-4 backdrop-blur-xl shadow-2xl" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
-            {isDark ? <Moon size={28} className="text-yellow-400" /> : <Sun size={28} className="text-violet-600" />}
+        <div className="flex flex-col items-center mb-5 shrink-0">
+          <motion.div whileHover={{ scale: 1.05 }} className="w-12 h-12 rounded-2xl border flex items-center justify-center mb-3 backdrop-blur-xl shadow-2xl" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
+            {isDark ? <Moon size={22} className="text-yellow-400" /> : <Sun size={22} className="text-violet-600" />}
           </motion.div>
-          <h1 className={`text-xl font-black tracking-[0.4em] uppercase ${isDark ? "text-white" : "text-slate-900"}`}>
+          <h1 className={`text-lg font-black tracking-[0.4em] uppercase ${isDark ? "text-white" : "text-slate-900"}`}>
             MAGIC<span className="opacity-30 font-light italic">PANEL</span>
           </h1>
         </div>
@@ -194,10 +194,10 @@ export default function LoginPage() {
           onSubmit={handleSubmit}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="w-full flex flex-col p-8 border rounded-[2.5rem] backdrop-blur-3xl shadow-2xl overflow-hidden"
+          className="w-full flex flex-col p-6 border rounded-3xl backdrop-blur-3xl shadow-2xl overflow-hidden"
           style={{ backgroundColor: colors.card, borderColor: colors.border }}
         >
-          <div className="flex flex-col gap-[3vh]">
+          <div className="flex flex-col gap-3.5">
 
             {/* TÍTULO DEL MODO (animado) */}
             <AnimatePresence mode="wait">
@@ -241,7 +241,7 @@ export default function LoginPage() {
                 )}
 
                 <Button type="submit" disabled={loading || loadingGoogle}
-                  className={`w-full font-black uppercase tracking-[0.3em] text-[11px] h-14 text-white border-none rounded-2xl shadow-xl transition-all active:scale-95 ${colors.button}`}>
+                  className={`w-full font-black uppercase tracking-[0.3em] text-[11px] h-11 text-white border-none rounded-2xl shadow-xl transition-all active:scale-95 ${colors.button}`}>
                   {BUTTON_LABELS[mode]}
                 </Button>
               </>
@@ -278,7 +278,7 @@ export default function LoginPage() {
                   <div className={`flex-1 h-px ${isDark ? "bg-white/10" : "bg-slate-200"}`} />
                 </div>
                 <Button type="button" variant="outline" onClick={handleGoogleSignIn} disabled={loading || loadingGoogle}
-                  className={`w-full h-12 rounded-2xl gap-3 text-[12px] font-semibold tracking-wide border ${
+                  className={`w-full h-10 rounded-2xl gap-3 text-[12px] font-semibold tracking-wide border ${
                     isDark
                       ? "border-slate-700/60 bg-slate-800/40 text-slate-200 hover:bg-slate-700/50"
                       : "border-slate-200 bg-white/90 text-slate-700 hover:bg-slate-50"
@@ -292,7 +292,7 @@ export default function LoginPage() {
           </div>
         </motion.form>
 
-        <div className="mt-[5vh] opacity-30 shrink-0">
+        <div className="mt-5 opacity-30 shrink-0">
           <span className="text-[10px] font-bold tracking-[0.5em] uppercase">M. GARRIDO — 2026</span>
         </div>
       </div>
