@@ -39,6 +39,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/lib/supabase";
+import { useAuditLog } from "@/hooks/useAuditLog";
 import { SortingState, ColumnFiltersState } from "@tanstack/react-table";
 import { toast } from "sonner";
 
@@ -55,6 +56,12 @@ type BaseOptions<T extends Record<string, any>> = {
   tableName: string;
   onEdit?: (row: T) => void;
   deleteLabel?: (row: T) => string;
+  /**
+   * Controla si se muestran las acciones de eliminar (fila y masiva).
+   * Por defecto `true` para mantener compatibilidad con código existente.
+   * Pasa `false` cuando el usuario no tiene el permiso "eliminar".
+   */
+  canDelete?: boolean;
 };
 
 /** Opciones exclusivas del modo cliente. */
@@ -85,7 +92,8 @@ export type UseSupabaseTableOptions<T extends Record<string, any>> =
 export function useSupabaseTable<T extends Record<string, any>>(
   options: UseSupabaseTableOptions<T>
 ) {
-  const { tableName, onEdit, deleteLabel = () => "este registro" } = options;
+  const { tableName, onEdit, deleteLabel = () => "este registro", canDelete = true } = options;
+  const { log } = useAuditLog();
   const isServer  = options.mode === "server";
   const serverOpts = isServer ? (options as ServerOptions<T>) : null;
   const clientOpts = !isServer ? (options as ClientOptions<T>) : null;
@@ -254,6 +262,12 @@ export function useSupabaseTable<T extends Record<string, any>>(
       toast.error("Error al guardar");
     } else {
       toast.success("Guardado");
+      log({
+        action:   "editar",
+        entity:   tableNameRef.current,
+        entityId: String(row.id),
+        detail:   `Campo "${columnId}" actualizado a "${value}"`,
+      });
     }
   };
 
@@ -285,6 +299,12 @@ export function useSupabaseTable<T extends Record<string, any>>(
                 } else {
                   setData((prev) => prev.filter((r) => r.id !== row.id));
                 }
+                log({
+                  action:   "eliminar",
+                  entity:   tableNameRef.current,
+                  entityId: String(row.id),
+                  detail:   `Eliminó ${deleteLabel(row)}`,
+                });
                 return "Eliminado correctamente";
               },
               error: (e) => (e instanceof Error ? e.message : "Error al eliminar"),
@@ -328,6 +348,11 @@ export function useSupabaseTable<T extends Record<string, any>>(
                   const idSet = new Set(ids);
                   setData((prev) => prev.filter((r) => !idSet.has(r.id)));
                 }
+                log({
+                  action: "eliminar_masivo",
+                  entity: tableNameRef.current,
+                  detail: `Eliminó ${deleted} registro${deleted !== 1 ? "s" : ""}`,
+                });
                 return `${deleted} registro${deleted !== 1 ? "s" : ""} eliminado${deleted !== 1 ? "s" : ""}`;
               },
               error: (e) => (e instanceof Error ? e.message : "Error al eliminar"),
@@ -343,9 +368,12 @@ export function useSupabaseTable<T extends Record<string, any>>(
      ACCIONES DE FILA
   ────────────────────── */
   const rowActions = (row: T): RowAction<T>[] => [
-    ...(onEdit ? [{ label: "Editar", onClick: () => onEdit(row), variant: "outline" as const }] : []),
-    { label: "Eliminar", onClick: () => handleDelete(row), variant: "danger" as const },
+    ...(onEdit    ? [{ label: "Editar",   onClick: () => onEdit(row),       variant: "outline" as const }] : []),
+    ...(canDelete ? [{ label: "Eliminar", onClick: () => handleDelete(row), variant: "danger"  as const }] : []),
   ];
+
+  // ¿Tiene al menos una acción de fila disponible?
+  const hasRowActions = !!onEdit || canDelete;
 
   /* ──────────────────────────────────────────────────
      RETORNO
@@ -361,9 +389,11 @@ export function useSupabaseTable<T extends Record<string, any>>(
     props: {
       data,
       loading,
-      onUpdate:     handleUpdate,
-      onBulkDelete: handleBulkDelete,
-      rowActions,
+      onUpdate: handleUpdate,
+      // Solo incluir si hay al menos una acción de fila disponible
+      ...(hasRowActions && { rowActions }),
+      // Solo incluir si el usuario puede eliminar (oculta el botón de eliminación masiva)
+      ...(canDelete && { onBulkDelete: handleBulkDelete }),
       // Props server-side (solo se incluyen cuando corresponde)
       ...(isServer && {
         serverSide:            true as const,

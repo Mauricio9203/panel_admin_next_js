@@ -40,10 +40,18 @@ export default function Sidebar({ collapsed, mobileOpen }: SidebarProps) {
     }));
   };
 
-  // Filtra los ítems según el rol del usuario.
-  // Mientras el rol no se conoce aún (loading o rol no cargado), muestra skeletons.
+  // Filtra ítems y sus hijos según el rol del usuario.
+  // Un hijo sin `roles` propio hereda los roles del padre.
   const visibleMenu = role
-    ? sidebarMenu.filter((item) => item.roles?.includes(role))
+    ? sidebarMenu
+        .filter((item) => item.roles?.includes(role))
+        .map((item) => ({
+          ...item,
+          children: item.children?.filter((child) => {
+            const childRoles = (child as any).roles ?? item.roles ?? [];
+            return childRoles.includes(role);
+          }),
+        }))
     : [];
 
   return (

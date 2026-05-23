@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "@/components/ui/DataTable";
 import { useSupabaseTable } from "@/hooks/useSupabaseTable";
+import { usePermission } from "@/hooks/usePermission";
 import { Plus } from "lucide-react";
 import Modal from "@/components/ui/Modal";
 import { FormProducto } from "./FormProducto";
@@ -40,11 +41,17 @@ export default function ProductosTable({ initialData }: ProductosTableProps) {
   const [modalAbierto, setModalAbierto] = useState(false);
   const [productoAEditar, setProductoAEditar] = useState<Producto | null>(null);
 
+  const canCrear    = usePermission("crear");
+  const canEditar   = usePermission("editar");
+  const canEliminar = usePermission("eliminar");
+  const canExportar = usePermission("exportar");
+
   const { setData, props } = useSupabaseTable<Producto>({
-    mode: "client",          // ← todos los datos en memoria
+    mode: "client",
     tableName: "productos",
     initialData,
-    onEdit: (row) => { setProductoAEditar(row); setModalAbierto(true); },
+    onEdit:      canEditar ? (row) => { setProductoAEditar(row); setModalAbierto(true); } : undefined,
+    canDelete:   canEliminar,
     deleteLabel: (row) => `"${row.nombre}"`,
   });
 
@@ -55,17 +62,17 @@ export default function ProductosTable({ initialData }: ProductosTableProps) {
         editableColumns={["sku","stock", "precio"]}
         pageSize={10}
         tableActions={[
-          {
-            label: "Nuevo Producto",
-            icon: Plus,
+          ...(canCrear ? [{
+            label:   "Nuevo Producto",
+            icon:    Plus,
             onClick: () => { setProductoAEditar(null); setModalAbierto(true); },
-            variant: "primary",
-          },
-          {
-            type: "export",
-            formats: ["csv", "excel", "json"],
+            variant: "primary" as const,
+          }] : []),
+          ...(canExportar ? [{
+            type:     "export"  as const,
+            formats:  ["csv", "excel", "json"] as ("csv" | "excel" | "json")[],
             filename: "productos",
-          },
+          }] : []),
         ]}
         {...props}
       />

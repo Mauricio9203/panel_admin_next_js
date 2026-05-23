@@ -9,12 +9,31 @@ import MobileOverlay from "@/components/MobileOverlay";
 import { useAuth, type UserRole } from "@/components/AuthProvider";
 import { sidebarMenu } from "@/config/sidebarMenu";
 
-/* ── Comprueba si el rol tiene acceso a la ruta actual ── */
+/* ── Comprueba si el rol tiene acceso a la ruta actual ──
+   Busca primero en los hijos (match más específico); si el hijo
+   tiene su propio campo `roles` lo usa, si no hereda el del padre.
+   Si ningún ítem coincide, permite el acceso.
+────────────────────────────────────────────────────────── */
 function hasRouteAccess(pathname: string, role: UserRole): boolean {
   for (const item of sidebarMenu) {
+    const parentRoles = (item.roles ?? []) as UserRole[];
+
+    // Busca primero en los hijos (ruta más específica)
+    if (item.children) {
+      for (const child of item.children) {
+        const childPath = `/${child.key}`;
+        if (pathname === childPath || pathname.startsWith(childPath + "/")) {
+          // Si el hijo tiene roles propios los usa; si no, hereda del padre
+          const childRoles = ((child as any).roles ?? parentRoles) as UserRole[];
+          return childRoles.includes(role);
+        }
+      }
+    }
+
+    // Luego comprueba el padre
     const base = `/${item.key}`;
     if (pathname === base || pathname.startsWith(base + "/")) {
-      return (item.roles as UserRole[]).includes(role);
+      return parentRoles.includes(role);
     }
   }
   return true; // ruta no mapeada → permitir
