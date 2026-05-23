@@ -13,5 +13,8 @@ export async function saveTheme(theme: PanelTheme): Promise<void> {
     .from("theme_config")
     .upsert({ id: 1, theme }, { onConflict: "id" });
 
-  if (error) throw new Error(`Error al guardar el tema: ${error.message}`);
+  if (error) {
+    console.error("[saveTheme] Supabase error:", JSON.stringify(error));
+    throw new Error(`Error al guardar el tema: ${error.message}`);
+  }
 }

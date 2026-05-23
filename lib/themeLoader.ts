@@ -1,13 +1,14 @@
+import { unstable_noStore } from "next/cache";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { DEFAULT_THEME, type PanelTheme } from "@/config/theme";
 
 /**
- * Carga el tema desde la base de datos sin caché.
- * El tema es un JSON pequeño (~1 KB) que cambia raramente,
- * por lo que fetchear en cada request es aceptable y garantiza
- * que siempre se sirve el tema correcto tras un guardado.
+ * Carga el tema desde la base de datos.
+ * unstable_noStore() impide que Next.js cachee este componente
+ * en el full-route cache de producción (Vercel CDN).
  */
 export async function loadTheme(): Promise<PanelTheme> {
+  unstable_noStore(); // fuerza render dinámico en cada request
   try {
     const { data, error } = await supabaseAdmin
       .from("theme_config")

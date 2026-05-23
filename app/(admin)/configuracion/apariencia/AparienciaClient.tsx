@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { Check, RotateCcw, Save } from "lucide-react";
 import { toast } from "sonner";
 import type { ThemePreset } from "@/config/themePresets";
@@ -200,7 +200,7 @@ export default function AparienciaClient({
   currentRadius,
   currentTheme,
 }: Props) {
-  const [isPending, startTransition] = useTransition();
+  const [isSaving, setIsSaving] = useState(false);
 
   const [selectedPresetId, setSelectedPresetId] = useState(activePresetId);
   const [selectedRadius,   setSelectedRadius]   = useState(currentRadius);
@@ -229,17 +229,20 @@ export default function AparienciaClient({
   };
 
   /* ── Guardar ── */
-  const handleSave = () => {
-    startTransition(async () => {
-      try {
-        await saveTheme(previewTheme);
-        // Hard reload: garantiza que el servidor sirva el tema recién guardado
-        // sin riesgo de datos stale en el cache del cliente.
-        window.location.reload();
-      } catch (e: any) {
-        toast.error(e?.message ?? "Error al guardar el tema");
-      }
-    });
+  // Usamos useState en vez de useTransition porque en React 19 los errores
+  // lanzados por Server Actions dentro de startTransition pueden ser capturados
+  // por React antes de llegar al try/catch del callback, causando fallos silenciosos.
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      await saveTheme(previewTheme);
+      // Hard reload: garantiza que el servidor sirva el tema recién guardado
+      // sin riesgo de datos stale en el cache del cliente.
+      window.location.reload();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Error al guardar el tema");
+      setIsSaving(false);
+    }
   };
 
   /* ── Restaurar defaults ── */
@@ -369,7 +372,7 @@ export default function AparienciaClient({
         <button
           type="button"
           onClick={handleReset}
-          disabled={isPending}
+          disabled={isSaving}
           className="flex items-center gap-2 px-4 py-2.5 text-[12px] font-semibold rounded-xl border border-border text-muted-foreground hover:bg-muted/50 transition-all disabled:opacity-50"
         >
           <RotateCcw size={13} />
@@ -379,14 +382,14 @@ export default function AparienciaClient({
         <button
           type="button"
           onClick={handleSave}
-          disabled={isPending || !hasChanges}
+          disabled={isSaving || !hasChanges}
           className="flex items-center gap-2 px-5 py-2.5 text-[12px] font-black uppercase tracking-wider rounded-xl bg-primary text-primary-foreground hover:opacity-90 transition-all shadow-lg shadow-primary/20 disabled:opacity-40 disabled:cursor-not-allowed active:scale-95"
         >
           <Save size={13} />
-          {isPending ? "Guardando..." : "Guardar cambios"}
+          {isSaving ? "Guardando..." : "Guardar cambios"}
         </button>
 
-        {hasChanges && !isPending && (
+        {hasChanges && !isSaving && (
           <p className="text-[11px] text-muted-foreground/70 ml-1">
             Tienes cambios sin guardar
           </p>
