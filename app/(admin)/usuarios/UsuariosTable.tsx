@@ -256,11 +256,12 @@ export default function UsuariosTable({ initialData }: { initialData: UsuarioCon
       columns={columns}
       editableColumns={[
         {
-          key:      "role",
-          type:     "select",
-          options:  ROLE_OPTIONS,
-          labelKey: "label",
-          valueKey: "value",
+          key:        "role",
+          type:       "select",
+          searchable: true,
+          options:    ROLE_OPTIONS,
+          labelKey:   "label",
+          valueKey:   "value",
         },
       ]}
       onUpdate={handleUpdate}

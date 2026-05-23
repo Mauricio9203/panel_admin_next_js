@@ -20,101 +20,133 @@ const GoogleIcon = () => (
 
 const THEME_CONFIG = {
   dark: {
-    bg: "bg-[#050502]",
-    card: "rgba(10, 10, 5, 0.7)",
+    bg:     "bg-[#050502]",
+    card:   "rgba(10, 10, 5, 0.7)",
     border: "rgba(234, 179, 8, 0.2)",
     button: "bg-yellow-500 hover:bg-yellow-400",
-    glow: "rgba(255, 205, 56, 0.96)",
+    glow:   "rgba(255, 205, 56, 0.96)",
   },
   light: {
-    bg: "bg-[#fcfcff]",
-    card: "rgba(255, 255, 255, 0.8)",
+    bg:     "bg-[#fcfcff]",
+    card:   "rgba(255, 255, 255, 0.8)",
     border: "rgba(139, 92, 246, 0.1)",
     button: "bg-violet-600 hover:bg-violet-700",
-    glow: "rgba(106, 43, 255, 0.94)",
+    glow:   "rgba(106, 43, 255, 0.94)",
   },
 };
+
+type Mode = "signin" | "signup" | "forgot";
 
 export default function LoginPage() {
   const router = useRouter();
   const { theme, setTheme } = useTheme();
 
-  // --- Estados Funcionales ---
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [email,         setEmail]         = useState("");
+  const [password,      setPassword]      = useState("");
+  const [error,         setError]         = useState("");
+  const [successMsg,    setSuccessMsg]     = useState("");
+  const [loading,       setLoading]       = useState(false);
   const [loadingGoogle, setLoadingGoogle] = useState(false);
-  const [mounted, setMounted] = useState(false);
+  const [mounted,       setMounted]       = useState(false);
+  const [mode,          setMode]          = useState<Mode>("signin");
 
-  const isDark = (mounted ? theme : "light") === "dark";
-  const colors = isDark ? THEME_CONFIG.dark : THEME_CONFIG.light;
+  const isDark  = (mounted ? theme : "light") === "dark";
+  const colors  = isDark ? THEME_CONFIG.dark : THEME_CONFIG.light;
 
-  // Forzamos los colores del input según el tema propio del login,
-  // ignorando la clase dark del HTML (que puede diferir durante la hidratación).
   const inputClass = isDark
     ? "[&_input]:!bg-slate-900/80 [&_input]:!border-slate-700 [&_input]:!text-slate-200"
     : "[&_input]:!bg-white/80 [&_input]:!border-slate-200 [&_input]:!text-slate-700";
 
-  // --- Lógica del Mouse Glow ---
-  const mouseX = useMotionValue(0);
-  const mouseY = useMotionValue(0);
+  const mouseX      = useMotionValue(0);
+  const mouseY      = useMotionValue(0);
   const springConfig = { damping: 25, stiffness: 150 };
-  const smoothX = useSpring(mouseX, springConfig);
-  const smoothY = useSpring(mouseY, springConfig);
+  const smoothX     = useSpring(mouseX, springConfig);
+  const smoothY     = useSpring(mouseY, springConfig);
 
   useEffect(() => {
     setMounted(true);
-    const handleMouseMove = (e: MouseEvent) => {
-      mouseX.set(e.clientX);
-      mouseY.set(e.clientY);
-    };
+    const handleMouseMove = (e: MouseEvent) => { mouseX.set(e.clientX); mouseY.set(e.clientY); };
     window.addEventListener("mousemove", handleMouseMove);
     return () => window.removeEventListener("mousemove", handleMouseMove);
   }, [mouseX, mouseY]);
 
-  // --- Manejador Google ---
+  /* ── Cambiar modo (limpia mensajes, conserva el email) ── */
+  const switchMode = (next: Mode) => {
+    setMode(next);
+    setError("");
+    setSuccessMsg("");
+  };
+
+  /* ── Google ── */
   const handleGoogleSignIn = async () => {
     setError("");
     setLoadingGoogle(true);
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
+      options: { redirectTo: `${window.location.origin}/auth/callback` },
     });
-    if (oauthError) {
-      setError("No se pudo iniciar sesión con Google");
-      setLoadingGoogle(false);
-    }
-    // Si no hay error el navegador redirige solo — no hace falta resetear el estado
+    if (oauthError) { setError("No se pudo iniciar sesión con Google"); setLoadingGoogle(false); }
   };
 
-  // --- Manejador de Login ---
+  /* ── Submit (maneja los tres modos) ── */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setSuccessMsg("");
 
-    if (!email || !password) {
-      setError("Por favor completa todos los campos");
+    /* RECUPERAR CONTRASEÑA */
+    if (mode === "forgot") {
+      if (!email) { setError("Ingresa tu correo"); return; }
+      setLoading(true);
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth/update-password`,
+      });
+      setLoading(false);
+      if (error) setError("No se pudo enviar el enlace. Verifica el correo.");
+      else       setSuccessMsg("¡Listo! Revisa tu correo y haz clic en el enlace para restablecer tu contraseña.");
       return;
     }
 
+    if (!email || !password) { setError("Por favor completa todos los campos"); return; }
     setLoading(true);
 
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-
-    if (error) {
-      setError("Credenciales inválidas");
+    /* REGISTRO */
+    if (mode === "signup") {
+      const { error } = await supabase.auth.signUp({ email, password });
       setLoading(false);
-    } else {
-      router.push("/dashboard");
+      if (error) {
+        setError(
+          error.message.toLowerCase().includes("already")
+            ? "Este correo ya está registrado. Intenta iniciar sesión."
+            : "Error al crear la cuenta. Inténtalo de nuevo."
+        );
+      } else {
+        setSuccessMsg("¡Cuenta creada! Revisa tu correo y haz clic en el enlace de confirmación para activarla.");
+      }
+      return;
     }
+
+    /* INICIO DE SESIÓN */
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) { setError("Credenciales inválidas"); setLoading(false); }
+    else        router.push("/dashboard");
+  };
+
+  const TITLES: Record<Mode, string> = {
+    signin: "Ingresar",
+    signup: "Crear cuenta",
+    forgot: "Recuperar acceso",
+  };
+
+  const BUTTON_LABELS: Record<Mode, string> = {
+    signin: loading ? "Ingresando..."      : "Ingresar",
+    signup: loading ? "Creando cuenta..."  : "Registrarse",
+    forgot: loading ? "Enviando..."        : "Enviar enlace",
   };
 
   return (
     <div className={`relative h-screen w-full flex items-center justify-center overflow-hidden transition-colors duration-700 ${colors.bg}`}>
-      {/* --- FONDO ANIMADO --- */}
+      {/* FONDO ANIMADO */}
       <div className="absolute inset-0 pointer-events-none">
         <motion.div
           animate={{ scale: [1, 1.2, 1], x: [0, 50, 0], y: [0, 30, 0] }}
@@ -130,18 +162,17 @@ export default function LoginPage() {
         />
       </div>
 
-      {/* --- MOUSE FOLLOW GLOW --- */}
+      {/* MOUSE FOLLOW GLOW */}
       <motion.div
         className="fixed top-0 left-0 w-96 h-96 rounded-full pointer-events-none z-0 blur-[100px] opacity-40 transition-colors duration-500"
         style={{
-          x: smoothX,
-          y: smoothY,
-          translateX: "-50%",
-          translateY: "-50%",
+          x: smoothX, y: smoothY,
+          translateX: "-50%", translateY: "-50%",
           background: `radial-gradient(circle, ${colors.glow} 0%, transparent 70%)`,
         }}
       />
 
+      {/* TOGGLE TEMA */}
       <div className="absolute top-6 right-6 z-[60]">
         <Button variant="ghost" size="icon" className="rounded-full backdrop-blur-md border border-white/10" onClick={() => setTheme(isDark ? "light" : "dark")}>
           {isDark ? <Sun size={18} className="text-yellow-400" /> : <Moon size={18} className="text-violet-600" />}
@@ -149,6 +180,7 @@ export default function LoginPage() {
       </div>
 
       <div className="w-full max-w-[420px] flex flex-col items-center justify-center z-50 px-6">
+        {/* LOGO */}
         <div className="flex flex-col items-center mb-[5vh] shrink-0">
           <motion.div whileHover={{ scale: 1.05 }} className="w-16 h-16 rounded-2xl border flex items-center justify-center mb-4 backdrop-blur-xl shadow-2xl" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
             {isDark ? <Moon size={28} className="text-yellow-400" /> : <Sun size={28} className="text-violet-600" />}
@@ -158,46 +190,105 @@ export default function LoginPage() {
           </h1>
         </div>
 
-        <motion.form onSubmit={handleSubmit} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full flex flex-col p-8 border rounded-[2.5rem] backdrop-blur-3xl shadow-2xl overflow-hidden" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
+        <motion.form
+          onSubmit={handleSubmit}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="w-full flex flex-col p-8 border rounded-[2.5rem] backdrop-blur-3xl shadow-2xl overflow-hidden"
+          style={{ backgroundColor: colors.card, borderColor: colors.border }}
+        >
           <div className="flex flex-col gap-[3vh]">
+
+            {/* TÍTULO DEL MODO (animado) */}
+            <AnimatePresence mode="wait">
+              <motion.p
+                key={mode}
+                initial={{ opacity: 0, y: -6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 6 }}
+                transition={{ duration: 0.18 }}
+                className={`text-sm font-bold text-center ${isDark ? "text-white/60" : "text-slate-500"}`}
+              >
+                {TITLES[mode]}
+              </motion.p>
+            </AnimatePresence>
+
+            {/* MENSAJES DE ERROR / ÉXITO */}
             <AnimatePresence mode="wait">
               {error && (
-                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="bg-red-500/10 border border-red-500/20 text-red-500 text-[10px] py-2 px-4 rounded-xl font-bold uppercase tracking-wider text-center">
+                <motion.div key="error" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}
+                  className="bg-red-500/10 border border-red-500/20 text-red-500 text-[10px] py-2 px-4 rounded-xl font-bold uppercase tracking-wider text-center">
                   {error}
+                </motion.div>
+              )}
+              {successMsg && (
+                <motion.div key="success" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}
+                  className="bg-green-500/10 border border-green-500/20 text-green-600 dark:text-green-400 text-[11px] py-3 px-4 rounded-xl font-medium text-center leading-relaxed">
+                  {successMsg}
                 </motion.div>
               )}
             </AnimatePresence>
 
-            <NormalInput label="Email" placeholder="nombre@ejemplo.com" icon={Mail} type="email" size="md" value={email} onChange={(e) => setEmail(e.target.value)} disabled={loading || loadingGoogle} className={inputClass} />
+            {/* CAMPOS (ocultos cuando hay mensaje de éxito) */}
+            {!successMsg && (
+              <>
+                <NormalInput label="Email" placeholder="nombre@ejemplo.com" icon={Mail} type="email" size="md"
+                  value={email} onChange={(e) => setEmail(e.target.value)} disabled={loading || loadingGoogle} className={inputClass} />
 
-            <NormalInput label="Password" placeholder="••••••••" icon={Lock} type="password" size="md" value={password} onChange={(e) => setPassword(e.target.value)} disabled={loading || loadingGoogle} className={inputClass} />
+                {mode !== "forgot" && (
+                  <NormalInput label="Password" placeholder="••••••••" icon={Lock} type="password" size="md"
+                    value={password} onChange={(e) => setPassword(e.target.value)} disabled={loading || loadingGoogle} className={inputClass} />
+                )}
 
-            <Button type="submit" disabled={loading || loadingGoogle} className={`w-full font-black uppercase tracking-[0.3em] text-[11px] h-14 mt-2 text-white border-none rounded-2xl shadow-xl transition-all active:scale-95 ${colors.button}`}>
-              {loading ? "Iniciando..." : "Ingresar"}
-            </Button>
+                <Button type="submit" disabled={loading || loadingGoogle}
+                  className={`w-full font-black uppercase tracking-[0.3em] text-[11px] h-14 text-white border-none rounded-2xl shadow-xl transition-all active:scale-95 ${colors.button}`}>
+                  {BUTTON_LABELS[mode]}
+                </Button>
+              </>
+            )}
 
-            {/* Divider */}
-            <div className="flex items-center gap-3">
-              <div className={`flex-1 h-px ${isDark ? "bg-white/10" : "bg-slate-200"}`} />
-              <span className={`text-[11px] font-medium ${isDark ? "text-white/30" : "text-slate-400"}`}>o</span>
-              <div className={`flex-1 h-px ${isDark ? "bg-white/10" : "bg-slate-200"}`} />
+            {/* LINKS DE MODO */}
+            <div className="flex flex-col items-center gap-1.5">
+              {!successMsg && mode === "signin" && (
+                <>
+                  <button type="button" onClick={() => switchMode("forgot")}
+                    className={`text-[11px] transition-colors ${isDark ? "text-white/30 hover:text-yellow-400" : "text-slate-400 hover:text-violet-600"}`}>
+                    ¿Olvidaste tu contraseña?
+                  </button>
+                  <button type="button" onClick={() => switchMode("signup")}
+                    className={`text-[11px] transition-colors ${isDark ? "text-white/30 hover:text-yellow-400" : "text-slate-400 hover:text-violet-600"}`}>
+                    ¿No tienes cuenta? <span className="font-bold">Regístrate</span>
+                  </button>
+                </>
+              )}
+              {(successMsg || mode === "signup" || mode === "forgot") && (
+                <button type="button" onClick={() => switchMode("signin")}
+                  className={`text-[11px] transition-colors ${isDark ? "text-white/30 hover:text-yellow-400" : "text-slate-400 hover:text-violet-600"}`}>
+                  ← Volver a iniciar sesión
+                </button>
+              )}
             </div>
 
-            {/* Google */}
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleGoogleSignIn}
-              disabled={loading || loadingGoogle}
-              className={`w-full h-12 rounded-2xl gap-3 text-[12px] font-semibold tracking-wide border ${
-                isDark
-                  ? "border-slate-700/60 bg-slate-800/40 text-slate-200 hover:bg-slate-700/50"
-                  : "border-slate-200 bg-white/90 text-slate-700 hover:bg-slate-50"
-              }`}
-            >
-              <GoogleIcon />
-              {loadingGoogle ? "Redirigiendo..." : "Continuar con Google"}
-            </Button>
+            {/* GOOGLE (solo en signin y sin éxito) */}
+            {!successMsg && mode === "signin" && (
+              <>
+                <div className="flex items-center gap-3">
+                  <div className={`flex-1 h-px ${isDark ? "bg-white/10" : "bg-slate-200"}`} />
+                  <span className={`text-[11px] font-medium ${isDark ? "text-white/30" : "text-slate-400"}`}>o</span>
+                  <div className={`flex-1 h-px ${isDark ? "bg-white/10" : "bg-slate-200"}`} />
+                </div>
+                <Button type="button" variant="outline" onClick={handleGoogleSignIn} disabled={loading || loadingGoogle}
+                  className={`w-full h-12 rounded-2xl gap-3 text-[12px] font-semibold tracking-wide border ${
+                    isDark
+                      ? "border-slate-700/60 bg-slate-800/40 text-slate-200 hover:bg-slate-700/50"
+                      : "border-slate-200 bg-white/90 text-slate-700 hover:bg-slate-50"
+                  }`}>
+                  <GoogleIcon />
+                  {loadingGoogle ? "Redirigiendo..." : "Continuar con Google"}
+                </Button>
+              </>
+            )}
+
           </div>
         </motion.form>
 

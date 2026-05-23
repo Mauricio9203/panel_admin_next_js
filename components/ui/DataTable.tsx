@@ -22,6 +22,11 @@ export type SelectColumnConfig = {
   options: Record<string, any>[];
   labelKey: string;
   valueKey: string;
+  /**
+   * true  → dropdown con búsqueda + portal  (recomendado para FK con muchas opciones)
+   * false → <select> nativo                 (default, para listas cortas y fijas)
+   */
+  searchable?: boolean;
 };
 
 export type EditableColumnConfig = string | SelectColumnConfig;
@@ -107,7 +112,14 @@ export function DataTable<TData>({
       const meta =
         typeof config === "string"
           ? { editable: true }
-          : { editable: true, type: config.type, options: config.options, labelKey: config.labelKey, valueKey: config.valueKey };
+          : {
+              editable   : true,
+              type       : config.type,
+              options    : config.options,
+              labelKey   : config.labelKey,
+              valueKey   : config.valueKey,
+              searchable : config.searchable ?? false,
+            };
       return { ...col, meta: { ...((col as any).meta ?? {}), ...meta } };
     });
   }, [columns, editableColumns]);

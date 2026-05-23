@@ -2,6 +2,7 @@
 
 import { flexRender, Table, RowData } from "@tanstack/react-table";
 import DataTableRowActions from "./DataTableRowActions";
+import InlineCellSelect from "./InlineCellSelect";
 import { Inbox } from "lucide-react";
 import { useState, useEffect } from "react";
 
@@ -21,20 +22,33 @@ const EditableCell = ({ value: initialValue, row, column, table }: any) => {
   };
 
   if (meta?.type === "select") {
+    /* Opciones normalizadas a { value, label } para ambos renders */
+    const opts = (meta.options as Record<string, any>[]).map((opt) => ({
+      value: String(opt[meta.valueKey]),
+      label: String(opt[meta.labelKey]),
+    }));
+
+    /* ── searchable: true → dropdown con búsqueda + portal ── */
+    if (meta?.searchable) {
+      return (
+        <InlineCellSelect
+          value={String(value ?? "")}
+          options={opts}
+          onChange={(val) => { setValue(val); commit(val); }}
+        />
+      );
+    }
+
+    /* ── searchable: false (default) → <select> nativo ── */
     return (
       <select
         value={value ?? ""}
-        onChange={(e) => {
-          setValue(e.target.value);
-          commit(e.target.value);
-        }}
+        onChange={(e) => { setValue(e.target.value); commit(e.target.value); }}
         className="w-full bg-transparent outline-none px-1 py-0.5 rounded-sm hover:bg-black/5 dark:hover:bg-white/5 focus:bg-white dark:focus:bg-neutral-800 focus:ring-1 focus:ring-violet-500/40 transition-all text-[12px] cursor-pointer"
       >
         <option value="" disabled>Seleccionar...</option>
-        {(meta.options as Record<string, any>[]).map((opt) => (
-          <option key={opt[meta.valueKey]} value={opt[meta.valueKey]}>
-            {opt[meta.labelKey]}
-          </option>
+        {opts.map((opt) => (
+          <option key={opt.value} value={opt.value}>{opt.label}</option>
         ))}
       </select>
     );
