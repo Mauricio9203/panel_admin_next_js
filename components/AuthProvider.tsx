@@ -48,20 +48,25 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
+      async (event, session) => {
         // Batch 1 (síncrono): libera el loading de sesión inmediatamente
         setSession(session);
         setLoading(false);
 
         if (session) {
-          setRoleLoading(true); // bloquea contenido hasta conocer el rol
-          try {
-            const r = await fetchRole(session.user.id);
-            setRole(r);
-          } catch {
-            setRole(null);
-          } finally {
-            setRoleLoading(false);
+          // Solo busca el rol al inicio o al hacer sign-in.
+          // TOKEN_REFRESHED, USER_UPDATED, etc. solo actualizan la sesión
+          // sin causar el spinner de "CARGANDO" en el contenido.
+          if (event === "INITIAL_SESSION" || event === "SIGNED_IN") {
+            setRoleLoading(true);
+            try {
+              const r = await fetchRole(session.user.id);
+              setRole(r);
+            } catch {
+              setRole(null);
+            } finally {
+              setRoleLoading(false);
+            }
           }
         } else {
           setRole(null);
