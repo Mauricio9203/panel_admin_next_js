@@ -200,7 +200,8 @@ export default function AparienciaClient({
   currentRadius,
   currentTheme,
 }: Props) {
-  const [isSaving, setIsSaving] = useState(false);
+  const [isSaving,    setIsSaving]    = useState(false);
+  const [isReloading, setIsReloading] = useState(false);
 
   const [selectedPresetId, setSelectedPresetId] = useState(activePresetId);
   const [selectedRadius,   setSelectedRadius]   = useState(currentRadius);
@@ -236,8 +237,9 @@ export default function AparienciaClient({
     setIsSaving(true);
     try {
       await saveTheme(previewTheme);
-      // Hard reload: garantiza que el servidor sirva el tema recién guardado
-      // sin riesgo de datos stale en el cache del cliente.
+      // Muestra overlay antes del reload para evitar que el usuario vea
+      // el estado intermedio con CSS vars mezcladas entre el tema anterior y el nuevo.
+      setIsReloading(true);
       window.location.reload();
     } catch (e: any) {
       toast.error(e?.message ?? "Error al guardar el tema");
@@ -257,6 +259,15 @@ export default function AparienciaClient({
   };
 
   return (
+    <>
+    {/* Overlay durante el reload para evitar estado visual roto entre temas */}
+    {isReloading && (
+      <div className="fixed inset-0 z-[9999] bg-background/90 backdrop-blur-md flex flex-col items-center justify-center gap-4 pointer-events-all">
+        <div className="h-9 w-9 animate-spin rounded-full border-[3px] border-primary border-t-transparent" />
+        <p className="text-sm font-medium text-muted-foreground">Aplicando tema...</p>
+      </div>
+    )}
+
     <div className="flex flex-col gap-8">
 
       {/* ── PRESETS ──────────────────────────────────────────────────────── */}
@@ -396,5 +407,6 @@ export default function AparienciaClient({
         )}
       </div>
     </div>
+    </>
   );
 }

@@ -49,6 +49,7 @@ export default function LoginPage() {
   const [loadingGoogle, setLoadingGoogle] = useState(false);
   const [mounted,       setMounted]       = useState(false);
   const [mode,          setMode]          = useState<Mode>("signin");
+  const [checkingSession, setCheckingSession] = useState(true);
 
   const isDark  = (mounted ? theme : "light") === "dark";
   const colors  = isDark ? THEME_CONFIG.dark : THEME_CONFIG.light;
@@ -62,6 +63,17 @@ export default function LoginPage() {
   const springConfig = { damping: 25, stiffness: 150 };
   const smoothX     = useSpring(mouseX, springConfig);
   const smoothY     = useSpring(mouseY, springConfig);
+
+  /* ── Redirigir al dashboard si ya hay sesión activa ── */
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        router.replace("/dashboard");
+      } else {
+        setCheckingSession(false);
+      }
+    });
+  }, [router]);
 
   useEffect(() => {
     setMounted(true);
@@ -143,6 +155,11 @@ export default function LoginPage() {
     signup: loading ? "Creando cuenta..."  : "Registrarse",
     forgot: loading ? "Enviando..."        : "Enviar enlace",
   };
+
+  /* Mientras verifica la sesión muestra fondo neutro para evitar flash del login */
+  if (checkingSession) {
+    return <div className="h-screen w-full bg-[#050502]" />;
+  }
 
   return (
     <div className={`relative h-screen w-full flex items-center justify-center overflow-hidden transition-colors duration-700 ${colors.bg}`}>
