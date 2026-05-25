@@ -109,7 +109,8 @@ const columns: ColumnDef<UsuarioConRol>[] = [
 export default function UsuariosTable({ initialData }: { initialData: UsuarioConRol[] }) {
   const [data, setData] = useState(initialData);
   const { session } = useAuth();
-  const currentUserId = session?.user?.id;
+  const currentUserId  = session?.user?.id;
+  const accessToken    = session?.access_token ?? "";
   const { log } = useAuditLog();
 
   /* ── Eliminar usuario ──────────────────────────────────────────────── */
@@ -127,7 +128,7 @@ export default function UsuariosTable({ initialData }: { initialData: UsuarioCon
         onClick: () => {
           toast.promise(
             (async () => {
-              await deleteUser(user.id);
+              await deleteUser(user.id, accessToken);
               setData((prev) => prev.filter((u) => u.id !== user.id));
             })(),
             {
@@ -169,7 +170,7 @@ export default function UsuariosTable({ initialData }: { initialData: UsuarioCon
           const ids = toDelete.map((u) => u.id);
           toast.promise(
             (async () => {
-              await deleteUsers(ids);
+              await deleteUsers(ids, accessToken);
               setData((curr) => curr.filter((u) => !ids.includes(u.id)));
               return toDelete.length;
             })(),
@@ -199,7 +200,7 @@ export default function UsuariosTable({ initialData }: { initialData: UsuarioCon
     toast.promise(
       (async () => {
         try {
-          await updateUsersRole(ids, newRole);
+          await updateUsersRole(ids, newRole, accessToken);
           return selected.length;
         } catch (e) {
           // Revertir si falla
@@ -238,7 +239,7 @@ export default function UsuariosTable({ initialData }: { initialData: UsuarioCon
     );
 
     try {
-      await updateUserRole(user.id, value as UserRole);
+      await updateUserRole(user.id, value as UserRole, accessToken);
       log({ action: "cambiar_rol", entity: "usuario", entityId: user.id, detail: `Rol de ${user.full_name ?? user.email} cambiado a "${value}"` });
       toast.success(`Rol de ${user.full_name ?? user.email} actualizado a "${value}"`);
     } catch {

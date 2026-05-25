@@ -1,13 +1,20 @@
 "use server";
 
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { assertRole } from "@/lib/assertRole";
 import type { UserRole } from "@/components/AuthProvider";
 
 /**
  * Actualiza (o crea) el rol de un usuario en la tabla profiles.
- * Usa upsert para cubrir el caso en que el usuario aún no tenga fila en profiles.
+ * Solo admins pueden ejecutar esta acción.
  */
-export async function updateUserRole(userId: string, newRole: UserRole): Promise<void> {
+export async function updateUserRole(
+  userId: string,
+  newRole: UserRole,
+  accessToken: string
+): Promise<void> {
+  await assertRole(accessToken, ["admin"]);
+
   const { error } = await supabaseAdmin
     .from("profiles")
     .upsert(
@@ -20,9 +27,14 @@ export async function updateUserRole(userId: string, newRole: UserRole): Promise
 
 /**
  * Elimina un usuario de auth.users (y en cascada su fila en profiles).
- * Requiere service_role key — solo llamar desde Server Actions.
+ * Solo admins pueden ejecutar esta acción.
  */
-export async function deleteUser(userId: string): Promise<void> {
+export async function deleteUser(
+  userId: string,
+  accessToken: string
+): Promise<void> {
+  await assertRole(accessToken, ["admin"]);
+
   await supabaseAdmin.from("profiles").delete().eq("id", userId);
 
   const { error } = await supabaseAdmin.auth.admin.deleteUser(userId);
@@ -31,9 +43,14 @@ export async function deleteUser(userId: string): Promise<void> {
 
 /**
  * Elimina múltiples usuarios en paralelo.
- * Borra los perfiles en batch y los usuarios de auth uno a uno (la API admin no tiene bulk delete).
+ * Solo admins pueden ejecutar esta acción.
  */
-export async function deleteUsers(userIds: string[]): Promise<void> {
+export async function deleteUsers(
+  userIds: string[],
+  accessToken: string
+): Promise<void> {
+  await assertRole(accessToken, ["admin"]);
+
   await supabaseAdmin.from("profiles").delete().in("id", userIds);
 
   const results = await Promise.allSettled(
@@ -48,8 +65,15 @@ export async function deleteUsers(userIds: string[]): Promise<void> {
 
 /**
  * Asigna un mismo rol a múltiples usuarios en una sola operación.
+ * Solo admins pueden ejecutar esta acción.
  */
-export async function updateUsersRole(userIds: string[], newRole: UserRole): Promise<void> {
+export async function updateUsersRole(
+  userIds: string[],
+  newRole: UserRole,
+  accessToken: string
+): Promise<void> {
+  await assertRole(accessToken, ["admin"]);
+
   const now = new Date().toISOString();
 
   const { error } = await supabaseAdmin

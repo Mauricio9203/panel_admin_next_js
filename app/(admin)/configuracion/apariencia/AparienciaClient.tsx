@@ -7,6 +7,7 @@ import type { ThemePreset } from "@/config/themePresets";
 import type { PanelTheme } from "@/config/theme";
 import { DEFAULT_THEME } from "@/config/theme";
 import { saveTheme } from "./actions";
+import { supabase } from "@/lib/supabase";
 
 /* ─────────────────────────────────────────────────────────────────────────────
    OPCIONES DE RADIO
@@ -236,7 +237,8 @@ export default function AparienciaClient({
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      await saveTheme(previewTheme);
+      const { data: { session } } = await supabase.auth.getSession();
+      await saveTheme(previewTheme, session?.access_token ?? "");
       // Muestra overlay antes del reload para evitar que el usuario vea
       // el estado intermedio con CSS vars mezcladas entre el tema anterior y el nuevo.
       setIsReloading(true);
