@@ -46,6 +46,10 @@ panel_admin_next_js/
 │       │       ├── page.tsx
 │       │       ├── actions.ts
 │       │       └── AparienciaClient.tsx
+│       ├── perfil/
+│       │   ├── page.tsx                 ← Server Component (wrapper)
+│       │   ├── PerfilClient.tsx         ← Edición de nombre y contraseña
+│       │   └── actions.ts               ← updateProfileName, updatePassword
 │       └── [NUEVO_MODULO]/              ← Así se añade un módulo nuevo
 │           ├── page.tsx
 │           ├── actions.ts
@@ -71,7 +75,8 @@ panel_admin_next_js/
 ├── lib/
 │   ├── supabase.ts                      ← Cliente público (anon key)
 │   ├── supabaseAdmin.ts                 ← Cliente admin (service_role, solo server)
-│   └── themeLoader.ts                   ← Carga tema desde DB (server)
+│   ├── themeLoader.ts                   ← Carga tema desde DB (server)
+│   └── assertRole.ts                    ← Verifica JWT + rol antes de ejecutar Server Actions
 ├── config/
 │   ├── theme.ts                         ← Tipos PanelTheme + DEFAULT_THEME
 │   ├── themePresets.ts                  ← Presets de color disponibles
@@ -89,9 +94,9 @@ panel_admin_next_js/
 -- Perfiles de usuario (vinculada a auth.users)
 profiles (
   id          uuid PRIMARY KEY REFERENCES auth.users,
-  email       text,
   role        text DEFAULT 'viewer',   -- 'admin' | 'manager' | 'viewer'
   created_at  timestamptz
+  -- NOTA: full_name, avatar_url, email viven en auth.users.user_metadata
 )
 
 -- Log de auditoría
@@ -243,6 +248,36 @@ export async function actualizarItem(id: number, data: Partial<Item>): Promise<v
 }
 ```
 
+### 3b. Server Action con verificación de rol (`assertRole`)
+
+Para acciones sensibles (eliminar, cambiar roles, guardar config), añade siempre
+`assertRole` al inicio del action. Verifica el JWT y consulta `profiles` en la DB.
+
+```ts
+// app/(admin)/[modulo]/actions.ts
+"use server";
+
+import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { assertRole } from "@/lib/assertRole";
+
+export async function eliminarItem(id: number, accessToken: string): Promise<void> {
+  // Lanza Error si el token es inválido o el rol no está permitido
+  await assertRole(accessToken, ["admin"]);
+
+  const { error } = await supabaseAdmin.from("[tabla]").delete().eq("id", id);
+  if (error) {
+    console.error("[eliminarItem] Supabase error:", JSON.stringify(error));
+    throw new Error(`Error al eliminar: ${error.message}`);
+  }
+}
+```
+
+El `accessToken` se obtiene en el cliente con:
+```tsx
+const { data: { session } } = await supabase.auth.getSession();
+await eliminarItem(id, session?.access_token ?? "");
+```
+
 ### 4. Llamar una Server Action desde el cliente
 
 ```tsx
@@ -268,7 +303,7 @@ const handleSave = async () => {
 
 ```tsx
 "use client";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/components/AuthProvider";
 
 export default function MiComponente() {
   const { session, role, loading } = useAuth();
@@ -283,6 +318,27 @@ export default function MiComponente() {
     </div>
   );
 }
+```
+
+### 5b. Datos del perfil del usuario autenticado
+
+`full_name`, `avatar_url`, `email` y `created_at` viven en `auth.users`, **no** en la tabla `profiles`.
+Léelos desde `session.user.user_metadata` (o `session.user.email`, etc.):
+
+```tsx
+const { session } = useAuth();
+const meta      = session?.user?.user_metadata ?? {};
+const fullName  = meta.full_name ?? meta.name ?? "";
+const avatarUrl = meta.avatar_url ?? meta.picture ?? null;
+const email     = session?.user?.email ?? "";
+const createdAt = session?.user?.created_at ?? "";
+```
+
+Para actualizar `full_name` desde un Server Action, usa `supabaseAdmin.auth.admin.updateUserById`:
+```ts
+await supabaseAdmin.auth.admin.updateUserById(userId, {
+  user_metadata: { full_name: nuevoNombre },
+});
 ```
 
 ### 6. Verificar permisos
@@ -429,7 +485,8 @@ import type { PanelTheme } from "@/config/theme";
 
 ### `export const dynamic`
 ```ts
-// Obligatorio en todas las páginas del panel admin para evitar caché estático en Vercel:
+// Ya está en app/(admin)/layout.tsx — NO hace falta repetirlo en cada page.
+// Solo añadirlo si creas páginas FUERA del grupo (admin).
 export const dynamic = "force-dynamic";
 ```
 
@@ -463,7 +520,7 @@ toast.info("Información");
 ## Checklist para crear un módulo nuevo
 
 1. **Crear carpeta** `app/(admin)/[modulo]/`
-2. **`page.tsx`** — Server Component con `export const dynamic = "force-dynamic"`, fetch de datos, `TituloModulo`, y renderiza el Client Component
+2. **`page.tsx`** — Server Component con fetch de datos, `TituloModulo`, y renderiza el Client Component (ya NO hace falta `export const dynamic` — lo hereda del layout)
 3. **`actions.ts`** — Server Actions con `"use server"`, usa `supabaseAdmin`, siempre `console.error` + `throw` ante errores
 4. **`[Modulo]Client.tsx`** o **`[Modulo]Table.tsx`** — Client Component con `"use client"`, usa `useSupabaseTable` + `DataTable` si es una tabla
 5. **Agregar al sidebar** en `config/sidebarMenu.ts` con el ícono y ruta correctos

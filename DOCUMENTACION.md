@@ -25,6 +25,7 @@
 12. [Gestión de usuarios](#12-gestión-de-usuarios)
 13. [Referencia rápida de hooks](#13-referencia-rápida-de-hooks)
 14. [Sistema de temas (Apariencia)](#14-sistema-de-temas-apariencia)
+15. [Módulo de Perfil (`/perfil`)](#15-módulo-de-perfil-perfil)
     - 14.1 Arquitectura
     - 14.2 Tabla `theme_config` en Supabase
     - 14.3 Tipos TypeScript (`config/theme.ts`)
@@ -110,11 +111,13 @@ CREATE TABLE public.profiles (
   id          uuid        PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   role        text        NOT NULL DEFAULT 'viewer'
                           CHECK (role IN ('admin', 'manager', 'viewer')),
-  full_name   text,
-  avatar_url  text,
-  updated_at  timestamptz DEFAULT now()
+  created_at  timestamptz DEFAULT now()
 );
 ```
+
+> ⚠️ **Importante:** `full_name`, `avatar_url`, y `email` NO están en esta tabla.
+> Esos datos viven en `auth.users.user_metadata` y se leen desde `session.user.user_metadata` en el cliente
+> o con `supabaseAdmin.auth.admin.getUserById(id)` en el servidor.
 
 ---
 
@@ -398,6 +401,10 @@ panel_admin_next_js/
 │   │   ├── dashboard/
 │   │   ├── usuarios/               # Módulo de gestión de usuarios
 │   │   ├── auditoria/              # Log de auditoría
+│   │   ├── perfil/                 ← Módulo de perfil del usuario
+│   │   │   ├── page.tsx
+│   │   │   ├── PerfilClient.tsx
+│   │   │   └── actions.ts
 │   │   └── configuracion/
 │   │       └── apariencia/         # Módulo de personalización visual
 │   │           ├── page.tsx        # Server Component (carga tema desde DB)
@@ -465,7 +472,8 @@ panel_admin_next_js/
 ├── lib/
 │   ├── supabase.ts                 # Cliente Supabase (browser)
 │   ├── supabaseAdmin.ts            # Cliente Supabase (server, service role)
-│   └── themeLoader.ts              # Carga el tema desde DB con caché de Next.js
+│   ├── themeLoader.ts              # Carga el tema desde DB con caché de Next.js
+│   └── assertRole.ts               ← Verifica JWT + rol antes de ejecutar Server Actions
 │
 └── .env.local                      # Variables de entorno (no commitear)
 ```
@@ -1001,7 +1009,9 @@ app/(admin)/clientes/
 import { supabase } from "@/lib/supabase";
 import ClientesTable from "./ClientesTable";
 
-export const dynamic = "force-dynamic"; // siempre datos frescos
+// YA NO es necesario — lo hereda del layout (admin).
+// Solo añadirlo si creas páginas fuera del grupo admin.
+// export const dynamic = "force-dynamic";
 
 export type Cliente = {
   id:         number;
@@ -1251,6 +1261,24 @@ export async function updateUserRole(userId: string, newRole: UserRole) { ... }
 export async function deleteUser(userId: string) { ... }
 export async function deleteUsers(userIds: string[]) { ... }
 export async function updateUsersRole(userIds: string[], newRole: UserRole) { ... }
+```
+
+#### Protección del lado servidor con `assertRole`
+
+Todas las Server Actions de usuarios requieren que el cliente pase su `accessToken`.
+El action verifica el JWT y el rol antes de ejecutar:
+
+```ts
+export async function deleteUser(userId: string, accessToken: string): Promise<void> {
+  await assertRole(accessToken, ["admin"]); // lanza si no es admin
+  // ... lógica de eliminación
+}
+```
+
+En el cliente:
+```tsx
+const { session } = useAuth();
+await deleteUser(userId, session?.access_token ?? "");
 ```
 
 ### Agregar columnas al listado de usuarios
@@ -1752,6 +1780,79 @@ Todos los componentes deben usar clases Tailwind basadas en CSS variables, **nun
 - [ ] Seleccionar un preset cambia el preview en tiempo real
 - [ ] "Guardar tema" persiste los cambios en Supabase
 - [ ] Al recargar, el tema guardado se aplica correctamente
+
+---
+
+---
+
+## 15. Módulo de Perfil (`/perfil`)
+
+Accesible desde el menú de usuario (botón `⋯` en el header). Permite a cualquier usuario autenticado ver y editar sus datos.
+
+### Qué ofrece
+
+| Sección | Descripción |
+|---|---|
+| **Cuenta** | Avatar, nombre, email, rol y fecha de ingreso (solo lectura) |
+| **Información personal** | Editar el nombre visible |
+| **Cambiar contraseña** | Nueva contraseña con confirmación e indicador de coincidencia |
+
+### Arquitectura
+
+```
+app/(admin)/perfil/
+  ├── page.tsx          ← Server Component (wrapper mínimo)
+  ├── PerfilClient.tsx  ← Client Component (todo el formulario)
+  └── actions.ts        ← updateProfileName · updatePassword
+```
+
+### Dónde viven los datos del usuario
+
+Los datos del perfil **no** están en la tabla `profiles` — esa tabla solo guarda `id`, `role` y `created_at`. Los datos del usuario viven en `auth.users`:
+
+| Dato | Cómo leerlo en el cliente |
+|---|---|
+| Nombre | `session.user.user_metadata.full_name \|\| session.user.user_metadata.name` |
+| Avatar | `session.user.user_metadata.avatar_url \|\| session.user.user_metadata.picture` |
+| Email | `session.user.email` |
+| Fecha de registro | `session.user.created_at` |
+
+### Server Actions
+
+```ts
+// app/(admin)/perfil/actions.ts
+"use server";
+import { supabaseAdmin } from "@/lib/supabaseAdmin";
+
+/** Actualiza el nombre en auth.users.user_metadata */
+export async function updateProfileName(name: string, accessToken: string): Promise<void> {
+  const { data: { user }, error } = await supabaseAdmin.auth.getUser(accessToken);
+  if (error || !user) throw new Error("Sesión inválida");
+
+  const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(user.id, {
+    user_metadata: { full_name: name.trim() },
+  });
+  if (updateError) throw new Error(`Error al actualizar el nombre: ${updateError.message}`);
+}
+
+/** Cambia la contraseña del usuario */
+export async function updatePassword(newPassword: string, accessToken: string): Promise<void> {
+  const { data: { user }, error } = await supabaseAdmin.auth.getUser(accessToken);
+  if (error || !user) throw new Error("Sesión inválida");
+  if (newPassword.length < 6) throw new Error("Mínimo 6 caracteres");
+
+  const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(user.id, {
+    password: newPassword,
+  });
+  if (updateError) throw new Error(`Error al cambiar la contraseña: ${updateError.message}`);
+}
+```
+
+### Notas importantes
+
+- El cambio de nombre se refleja **inmediatamente** en el cliente actualizando el estado local — no requiere recarga.
+- El avatar de Google OAuth (`avatar_url` / `picture` en `user_metadata`) se muestra automáticamente si está disponible; si no, se generan iniciales.
+- Los usuarios con login de Google **no pueden cambiar contraseña** desde este módulo (Supabase retornará error). Si quieres ocultarlo para OAuth, filtra por `session.user.app_metadata.provider`.
 
 ---
 
