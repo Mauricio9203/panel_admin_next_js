@@ -3,8 +3,6 @@ import TituloModulo from "@/components/ui/TituloModulo";
 import { Users } from "lucide-react";
 import UsuariosTable from "./UsuariosTable";
 
-export const dynamic = "force-dynamic";
-
 /* ─── Tipo exportado (lo usa UsuariosTable) ──────────────────────────────── */
 export type UsuarioConRol = {
   id:               string;

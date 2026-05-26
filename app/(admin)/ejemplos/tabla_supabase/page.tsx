@@ -3,8 +3,6 @@ import { LayoutDashboard } from "lucide-react";
 import ProductosTable from "./ProductosTable";
 import { supabase } from "@/lib/supabase";
 
-export const dynamic = "force-dynamic";
-
 export default async function Page() {
   // 2. Apuntamos a la tabla "productos" y seleccionamos las columnas que creamos con SQL
   const { data, error } = await supabase.from("productos").select("id, created_at, nombre, precio, sku, stock").order("created_at", { ascending: true });

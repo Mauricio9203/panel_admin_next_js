@@ -3,24 +3,26 @@ import { ReactNode } from "react";
 type ChartCardProps = {
   title: string;
   children: ReactNode;
+  className?: string;
 };
 
-export default function ChartCard({ title, children }: ChartCardProps) {
+export default function ChartCard({ title, children, className = "" }: ChartCardProps) {
   return (
     <div
-      className="
+      className={`
         h-72
         w-full
         flex
         flex-col
         rounded-md
-        p-5
+        p-4 sm:p-5
         bg-white/80 dark:bg-zinc-800/70
         border border-violet-200 dark:border-zinc-700
         shadow-sm dark:shadow-none
         backdrop-blur
         transition-colors
-      "
+        ${className}
+      `}
     >
       {/* Header */}
       <p className="text-xs mb-2 text-gray-500">{title}</p>

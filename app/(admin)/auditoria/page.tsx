@@ -3,8 +3,6 @@ import TituloModulo from "@/components/ui/TituloModulo";
 import { History } from "lucide-react";
 import AuditoriaTable from "./AuditoriaTable";
 
-export const dynamic = "force-dynamic";
-
 /* ─── Tipo exportado (lo usa AuditoriaTable) ─────────────────────────────── */
 export type AuditEntry = {
   id:          string;

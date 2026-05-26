@@ -6,6 +6,8 @@ import { ReactNode } from "react";
 
 type StatColor = "violet" | "emerald" | "amber" | "rose" | "blue" | "zinc";
 
+type ColSpan = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
+
 interface StatCardProps {
   title: string;
   value: string | number;
@@ -15,11 +17,14 @@ interface StatCardProps {
     isUp: boolean;
   };
   color?: StatColor;
-  md?: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
+  sm?: ColSpan;
+  md?: ColSpan;
+  lg?: ColSpan;
   description?: string;
+  className?: string;
 }
 
-export default function StatCard({ title, value, icon: Icon, trend, color = "zinc", md = 4, description }: StatCardProps) {
+export default function StatCard({ title, value, icon: Icon, trend, color = "zinc", sm, md = 4, lg, description, className = "" }: StatCardProps) {
   // Mapeo de estilos según el color elegido
   const colorStyles: Record<StatColor, string> = {
     violet: "text-violet-600 bg-violet-500/10 border-violet-200/50 dark:text-violet-400 dark:bg-violet-500/20",
@@ -31,7 +36,7 @@ export default function StatCard({ title, value, icon: Icon, trend, color = "zin
   };
 
   return (
-    <Card md={md} className="relative overflow-hidden group transition-all duration-300 hover:shadow-md hover:border-violet-300/50 dark:hover:border-zinc-700">
+    <Card sm={sm} md={md} lg={lg} className={`relative overflow-hidden group transition-all duration-300 hover:shadow-md hover:border-violet-300/50 dark:hover:border-zinc-700 ${className}`}>
       <div className="flex items-start justify-between">
         <div className="space-y-1">
           {/* Título: Siempre presente */}
