@@ -99,7 +99,7 @@ export function DataTable<TData>({
   sorting: externalSorting,
   onSortingChange,
   columnFilters: externalColumnFilters,
-  onColumnFiltersChange,
+  onColumnFiltersChange
 }: DataTableProps<TData>) {
   const processedColumns = useMemo(() => {
     if (!editableColumns?.length) return columns;
