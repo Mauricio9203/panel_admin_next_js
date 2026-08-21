@@ -1,4 +1,4 @@
-import { LayoutDashboard, Table2, FlaskConical, ServerIcon, Users, History, Settings, Palette, FolderOpen } from "lucide-react";
+import { LayoutDashboard, Table2, FlaskConical, ServerIcon, Users, History, Palette, FolderOpen } from "lucide-react";
 
 export const sidebarMenu = [
   {
@@ -27,16 +27,6 @@ export const sidebarMenu = [
     label: "Auditoría",
     icon:  History,
     roles: ["admin"],
-  },
-  
-  {
-    key:   "configuracion",
-    label: "Configuración",
-    icon:  Settings,
-    roles: ["admin"],
-    children: [
-      { key: "configuracion/apariencia", label: "Apariencia", icon: Palette, roles: ["admin"] },
-    ],
   },
   {
     key:   "ejemplos",
